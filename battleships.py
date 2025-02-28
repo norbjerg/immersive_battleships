@@ -24,9 +24,10 @@ class GuessReturn(Enum):
     finished_game = "finished_game"
 
 class Ship:
-    def __init__(self, start_pos: tuple[int, int], end_pos: tuple[int, int]) -> None:
+    def __init__(self, start_pos: tuple[int, int], end_pos: tuple[int, int], player: int) -> None:
         startx, starty = start_pos
         endx, endy = end_pos
+        self.player = player
 
         if startx - endx != 0 and starty - endy != 0:
             raise ValueError("Invalid ship configuration")
@@ -44,9 +45,24 @@ class Ship:
 
         self.lives = len(self.filled)
 
+class Game:
+    def __init__(self, board_size: tuple[int, int], ships: list[Ship]) -> None:
+        self.width, self.height = board_size
+        self.p1_board = PlayerBoard((0,self.width//2-1),(0,self.y ),[ship for ship in ships if ship.player == 1])
+        self.p2_board = PlayerBoard((0,self.width//2),(0,self.y),[ship for ship in ships if ship.player == 2])
+        self.current_board = p2_board
+
+    def make_guess(self, guess: tuple[int, int]) -> GuessReturn:
+        current_board.make_guess(guess)
+
+
+
+
+
+
 
 class PlayerBoard:
-    def __init__(self, player_num: Literal[1, 2]) -> None:
+    def __init__(self, width: tuple[int, int], height: tuple[int, int], ships: list[Ship]) -> None:
         """
         ships is given as a dict with the beginning position of the ship as key, and size as value
         """
@@ -102,18 +118,8 @@ class PlayerBoard:
 
 
 def main():
-    p1_ships = [Ship((0,0),(0,1)), Ship((1,0),(1,2)), Ship((2,0),(2,3)), Ship((3,0),(3,4))]
-    p2_ships = [Ship((0,0),(0,1)), Ship((1,0),(1,2)), Ship((2,0),(2,3)), Ship((3,0),(3,4))]
     p1_board = PlayerBoard(1)
-    p1_board.add_ships(p1_ships)
     p2_board = PlayerBoard(2)
-    p2_board.add_ships(p2_ships)
-    current_board = p1_board
-    while current_board.make_guess(eval(input("Make a guess: "))) != GuessReturn.finished_game:
-        if current_board != p1_board:
-            current_board = p1_board
-        else:
-            current_board = p2_board
 
 
 if __name__ == "__main__":
