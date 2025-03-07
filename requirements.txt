@@ -2,3 +2,4 @@
 pyserial
 cobs
 bitarray
+opencv-python
