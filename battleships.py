@@ -100,6 +100,8 @@ class PlayerBoard:
     def add_ships(self, ships: list[Ship]):
         for ship in ships:
             for coord in ship.filled:
+                if not self.in_bound(coord):
+                    raise ValueError(f"Ship is out of bounds on player {self.player_num} board with coord:\n {ship.filled}")
                 self.board[coord] = ship  # will make references
 
     def in_bounds(self, coord: tuple[int, int]) -> bool:
