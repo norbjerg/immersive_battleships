@@ -100,7 +100,7 @@ class PlayerBoard:
     def add_ships(self, ships: list[Ship]):
         for ship in ships:
             for coord in ship.filled:
-                if not self.in_bound(coord):
+                if not self.in_bounds(coord):
                     raise ValueError(f"Ship is out of bounds on player {self.player_num} board with coord:\n {ship.filled}")
                 self.board[coord] = ship  # will make references
 
@@ -146,7 +146,7 @@ def main():
     if tableActive:
         t.clear()
 
-    game = Game((14, 12), [Ship((0,0),(4,0),1), Ship((13,12),(13,10),2)])
+    game = Game((14, 12), [Ship((0,0),(4,0),1), Ship((13,11),(13,10),2)])
     while True:
         result = game.make_guess(eval(input(f"Player {game.current_player()} make a guess\n")))
         print(result)
