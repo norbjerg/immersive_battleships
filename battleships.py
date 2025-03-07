@@ -25,6 +25,13 @@ class GuessReturn(Enum):
     finished_game = "finished_game"
 
 class Ship:
+    """
+    start_pos is the board coordinate of where one end of the ship is
+
+    end_pos is the board coordinate of where the other end of the ship is
+
+    player signifies which player the ship belongs to
+    """
     def __init__(self, start_pos: tuple[int, int], end_pos: tuple[int, int], player: int) -> None:
         startx, starty = start_pos
         endx, endy = end_pos
@@ -47,6 +54,11 @@ class Ship:
         self.lives = len(self.filled)
 
 class Game:
+    """
+    board_size is given as the dimensions of the board being played
+
+    ships are given as a list of Ship objects
+    """
     def __init__(self, board_size: tuple[int, int], ships: list[Ship]) -> None:
         self.width, self.height = board_size
         self.p1_board = PlayerBoard((0,self.width//2-1),(0,self.height-1),[ship for ship in ships if ship.player == 1], 1)
@@ -86,7 +98,9 @@ class Game:
 class PlayerBoard:
     def __init__(self, width: tuple[int, int], height: tuple[int, int], ships: list[Ship], player_num: int) -> None:
         """
-        ships is given as a dict with the beginning position of the ship as key, and size as value
+        ships are given as a list of Ship objects
+
+        player_num identifies which player the board belongs to
         """
         self.x = width
         self.y = height
@@ -98,6 +112,9 @@ class PlayerBoard:
         self.add_ships(ships)
 
     def add_ships(self, ships: list[Ship]):
+        """
+        Adds the ships to the board dictionary for easy lookup when making guesses
+        """
         for ship in ships:
             for coord in ship.filled:
                 if not self.in_bounds(coord):
@@ -105,6 +122,9 @@ class PlayerBoard:
                 self.board[coord] = ship  # will make references
 
     def in_bounds(self, coord: tuple[int, int]) -> bool:
+        """
+        Checks if the given coord is in bounds of the players board
+        """
         return (self.x[0] <= coord[0] <= self.x[1]
             and self.y[0] <= coord[1] <= self.y[1])
 
@@ -112,7 +132,7 @@ class PlayerBoard:
         """
         Let the other player make a guess on this board.
 
-        The coord param should be in the coordinate system of the full air table (i.e. 12x14)
+        The coord param should be in the coordinate system of the full air table (i.e. 14x12)
         """
         if coord in self.guesses:
             return GuessReturn.dupe_guess
