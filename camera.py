@@ -36,15 +36,15 @@ class Camera:
         ids_to_corners = dict(zip(ids, aruco_corners))
 
         grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        # cv2.imwrite("DEBUG-grey.png", grey)
+        cv2.imwrite("DEBUG-grey.png", grey)
 
         gauss = cv2.GaussianBlur(grey, (5, 5), 0)
-        # cv2.imwrite("DEBUG-gauss.png", gauss)
+        cv2.imwrite("DEBUG-gauss.png", gauss)
 
         thresh = cv2.adaptiveThreshold(
             gauss, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 131, 15
         )
-        # cv2.imwrite("DEBUG-thresh.png", thresh)
+        cv2.imwrite("DEBUG-thresh.png", thresh)
         cnts, _ = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
         centers = []
@@ -97,6 +97,9 @@ class Camera:
             center_stack = center_stack[BOARD_X_MAX+1:]
             y_counter += 1
 
+        for center in centers:
+            cv2.circle(image, center, 5, (20, 120, 20))
+        cv2.imwrite("DEBUG-centers.png", image)
 
         return board_coord_to_image_coord
 
