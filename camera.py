@@ -1,11 +1,18 @@
 import cv2
 import numpy as np
 from cv2 import aruco
-from sklearn.neighbors import KDTree
 
 BOT_LEFT_ARUCO_ID = 0
 TOP_RIGHT_ARUCO_ID = 1
+BOARD_X_MIN = 0
+BOARD_Y_MIN = 0
+BOARD_X_MAX = 13
+BOARD_Y_MAX = 11
+CLOSENESS_THRESHOLD = 2
 
+def show_img(img, title="lol"):
+    cv2.imshow(title, img)
+    cv2.waitKey(0)
 
 class Camera:
     def __init__(self):
@@ -29,16 +36,16 @@ class Camera:
         ids_to_corners = dict(zip(ids, aruco_corners))
 
         grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        cv2.imwrite("DEBUG-grey.png", grey)
+        # cv2.imwrite("DEBUG-grey.png", grey)
 
         gauss = cv2.GaussianBlur(grey, (5, 5), 0)
-        cv2.imwrite("DEBUG-gauss.png", gauss)
+        # cv2.imwrite("DEBUG-gauss.png", gauss)
 
-        _, thresh = cv2.threshold(gauss, 200, 255, cv2.THRESH_BINARY)
-        cv2.imwrite("DEBUG-thresh.png", thresh)
+        thresh = cv2.adaptiveThreshold(
+            gauss, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 131, 15
+        )
+        # cv2.imwrite("DEBUG-thresh.png", thresh)
         cnts, _ = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-        # cimg = cv2.drawContours(image, cnts,-1, (120,20,20),3)
-        # cv2.imwrite("DEBUG-cont.png", cimg)
 
         centers = []
 
@@ -48,18 +55,53 @@ class Camera:
             cY = int(M["m01"] / M["m00"]) if M["m00"] != 0 else 0
             if (
                 cX > ids_to_corners[BOT_LEFT_ARUCO_ID][0][1][0]  # top right corner x
-                and cY < ids_to_corners[BOT_LEFT_ARUCO_ID][0][1][1]  # top right corner y
-                and cX < ids_to_corners[TOP_RIGHT_ARUCO_ID][0][3][0]  # bottom left corner x
-                and cY > ids_to_corners[TOP_RIGHT_ARUCO_ID][0][3][1] + 2  # bottom left corner y
+                and cY
+                < ids_to_corners[BOT_LEFT_ARUCO_ID][0][1][1]  # top right corner y
+                and cX
+                < ids_to_corners[TOP_RIGHT_ARUCO_ID][0][3][0]
+                - 2  # bottom left corner x
+                and cY
+                > ids_to_corners[TOP_RIGHT_ARUCO_ID][0][3][1]
+                + 2  # bottom left corner y
             ):
                 centers.append((cX, cY))
 
-        for center in centers:
-            cv2.circle(image, center, 5, (20, 120, 20))
+        remove_center = []
+        checked = set()
+        for idx0, (c0x, c0y) in enumerate(centers):
+            for idx1, (c1x, c1y) in enumerate(centers):
+                if idx0 == idx1:
+                    continue
+                if (idx1,idx0) in checked:
+                    continue
+                dist = ((c0x-c1x)**2+(c0y-c1y)**2)**0.5
+                if dist <= CLOSENESS_THRESHOLD:
+                    remove_center.append(centers[idx0])
+                checked.add((idx0,idx1))
 
-        cv2.imwrite("result.png", image)
+        for c in remove_center:
+            centers.pop(centers.index(c))
 
-        
+
+        center_stack = centers.copy()
+
+        board_coord_to_image_coord: dict[tuple[int,int],tuple[int,int]] = {}
+
+        y_counter = 0
+        while y_counter <= BOARD_Y_MAX:
+            center_stack.sort(key=lambda c: c[1])
+            row = center_stack[BOARD_X_MIN: BOARD_X_MAX+1]
+            row.sort(key=lambda c: c[0])
+            for i, c in enumerate(row):
+                board_coord_to_image_coord[(BOARD_X_MAX - i, y_counter)] = c
+                img = image.copy()
+                cv2.circle(img, board_coord_to_image_coord[(BOARD_X_MAX - i, y_counter)], 5, (20, 120, 20))
+                show_img(img, f"{(BOARD_X_MAX - i, y_counter)}")
+            center_stack = center_stack[BOARD_X_MAX+1:]
+            y_counter += 1
+
+
+        return board_coord_to_image_coord
 
 
 cam = Camera()
