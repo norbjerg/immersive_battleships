@@ -94,9 +94,6 @@ class Camera:
             row.sort(key=lambda c: c[0])
             for i, c in enumerate(row):
                 board_coord_to_image_coord[(BOARD_X_MAX - i, y_counter)] = c
-                img = image.copy()
-                cv2.circle(img, board_coord_to_image_coord[(BOARD_X_MAX - i, y_counter)], 5, (20, 120, 20))
-                show_img(img, f"{(BOARD_X_MAX - i, y_counter)}")
             center_stack = center_stack[BOARD_X_MAX+1:]
             y_counter += 1
 
