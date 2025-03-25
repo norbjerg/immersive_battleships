@@ -1,5 +1,6 @@
 # Ignore any potential debug pictures
 *.png
+!Board_w_aruco.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
