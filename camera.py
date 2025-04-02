@@ -19,7 +19,7 @@ def show_img(img, title="lol"):
 
 class Camera:
     def __init__(self):
-        self.cam = cv2.VideoCapture(0)
+        self.cam = cv2.VideoCapture(4)
 
     def get_image(self) -> np.ndarray:
         result, image = self.cam.read()
@@ -104,9 +104,10 @@ class Camera:
         cv2.imwrite("DEBUG-centers.png", image)
 
     def detect_colors(self, img):
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         lower_blue = np.array([90, 60, 0])
         upper_blue = np.array([121, 255, 255])
-        blue_mask = cv2.inRange(img, lower_blue, upper_blue)
+        blue_mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
         cnts_blue = imutils.grab_contours(
             cv2.findContours(blue_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -114,21 +115,21 @@ class Camera:
 
         lower_green = np.array([40, 70, 80])
         upper_green = np.array([70, 255, 255])
-        green_mask = cv2.inRange(img, lower_green, upper_green)
+        green_mask = cv2.inRange(hsv, lower_green, upper_green)
         cnts_green = imutils.grab_contours(
             cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
         lower_yellow = np.array([25, 70, 120])
         upper_yellow = np.array([30, 255, 255])
-        yellow_mask = cv2.inRange(img, lower_yellow, upper_yellow)
+        yellow_mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
         cnts_yellow = imutils.grab_contours(
             cv2.findContours(yellow_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
         lower_red = np.array([0, 50, 120])
         upper_red = np.array([10, 255, 255])
-        red_mask = cv2.inRange(img, lower_red, upper_red)
+        red_mask = cv2.inRange(hsv, lower_red, upper_red)
         cnts_red = imutils.grab_contours(
             cv2.findContours(red_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
@@ -160,7 +161,6 @@ class Camera:
 cam = Camera()
 # cam.otsu_thresh()
 while True:
-    
     cam.detect_colors(cam.get_image())
 
     k = cv2.waitKey(5)
