@@ -105,31 +105,36 @@ class Camera:
 
     def detect_colors(self, img):
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        lower_blue = np.array([50, 80, 160])
-        upper_blue = np.array([60, 110, 190])
+        lower_blue = np.array([100, 100, 100])
+        upper_blue = np.array([130, 255, 255])
         blue_mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
         cnts_blue = imutils.grab_contours(
             cv2.findContours(blue_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
-        lower_green = np.array([50, 130, 160])
-        upper_green = np.array([60, 150, 200])
+        lower_green = np.array([55, 100, 50])
+        upper_green = np.array([85, 255, 255])
         green_mask = cv2.inRange(hsv, lower_green, upper_green)
         cnts_green = imutils.grab_contours(
             cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
-        lower_yellow = np.array([20, 210, 180])
-        upper_yellow = np.array([30, 230, 200])
+        lower_yellow = np.array([15, 100, 100])
+        upper_yellow = np.array([35, 255, 255])
         yellow_mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
         cnts_yellow = imutils.grab_contours(
             cv2.findContours(yellow_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
-        lower_red = np.array([20, 235, 220])
-        upper_red = np.array([30, 255, 255])
-        red_mask = cv2.inRange(hsv, lower_red, upper_red)
+        lower_red1 = np.array([0, 100, 100])
+        upper_red1 = np.array([10, 255, 255])
+        lower_red2 = np.array([175, 100, 100])
+        upper_red2 = np.array([179, 255, 255])
+        red_mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
+        red_mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
+        red_mask = red_mask1 | red_mask2
+
         cnts_red = imutils.grab_contours(
             cv2.findContours(red_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
@@ -161,7 +166,7 @@ class Camera:
 cam = Camera()
 # cam.otsu_thresh()
 while True:
-    cam.detect_colors(cam.get_image())
+    cam.detect_colors(cv2.imread("colorscale.png"))
 
     k = cv2.waitKey(5)
     if k == 27:
