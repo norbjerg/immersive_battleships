@@ -3,7 +3,11 @@ from battleships import *
 
 #class TestGame(unittest.TestCase):
 
-#class TestPlayerBoard(unittest.TestCase):
+class TestPlayerBoard(unittest.TestCase):
+    def test_add_ships(self):
+        self.p1_board = PlayerBoard((0,self.width//2-1),(0,self.height-1),[ship for ship in ships if ship.player == 1], 1)
+        test_player = PlayerBoard((0,10),(0,10),[Ship((0,0),(0,2), 1)]
+        self.assertTrue(
 
 
 class TestShip(unittest.TestCase):
