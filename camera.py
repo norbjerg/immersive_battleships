@@ -1,4 +1,5 @@
 import cv2
+import imutils
 import numpy as np
 from cv2 import aruco
 
@@ -10,9 +11,11 @@ BOARD_X_MAX = 13
 BOARD_Y_MAX = 11
 CLOSENESS_THRESHOLD = 2
 
+
 def show_img(img, title="lol"):
     cv2.imshow(title, img)
     cv2.waitKey(0)
+
 
 class Camera:
     def __init__(self):
@@ -72,37 +75,94 @@ class Camera:
             for idx1, (c1x, c1y) in enumerate(centers):
                 if idx0 == idx1:
                     continue
-                if (idx1,idx0) in checked:
+                if (idx1, idx0) in checked:
                     continue
-                dist = ((c0x-c1x)**2+(c0y-c1y)**2)**0.5
+                dist = ((c0x - c1x) ** 2 + (c0y - c1y) ** 2) ** 0.5
                 if dist <= CLOSENESS_THRESHOLD:
                     remove_center.append(centers[idx0])
-                checked.add((idx0,idx1))
+                checked.add((idx0, idx1))
 
         for c in remove_center:
             centers.pop(centers.index(c))
 
-
         center_stack = centers.copy()
 
-        board_coord_to_image_coord: dict[tuple[int,int],tuple[int,int]] = {}
+        board_coord_to_image_coord: dict[tuple[int, int], tuple[int, int]] = {}
 
         y_counter = 0
         while y_counter <= BOARD_Y_MAX:
             center_stack.sort(key=lambda c: c[1])
-            row = center_stack[BOARD_X_MIN: BOARD_X_MAX+1]
+            row = center_stack[BOARD_X_MIN : BOARD_X_MAX + 1]
             row.sort(key=lambda c: c[0])
             for i, c in enumerate(row):
                 board_coord_to_image_coord[(BOARD_X_MAX - i, y_counter)] = c
-            center_stack = center_stack[BOARD_X_MAX+1:]
+            center_stack = center_stack[BOARD_X_MAX + 1 :]
             y_counter += 1
 
         for center in centers:
             cv2.circle(image, center, 5, (20, 120, 20))
         cv2.imwrite("DEBUG-centers.png", image)
 
-        return board_coord_to_image_coord
+    def detect_colors(self, img):
+        lower_blue = np.array([90, 60, 0])
+        upper_blue = np.array([121, 255, 255])
+        blue_mask = cv2.inRange(img, lower_blue, upper_blue)
+
+        cnts_blue = imutils.grab_contours(
+            cv2.findContours(blue_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        )
+
+        lower_green = np.array([40, 70, 80])
+        upper_green = np.array([70, 255, 255])
+        green_mask = cv2.inRange(img, lower_green, upper_green)
+        cnts_green = imutils.grab_contours(
+            cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        )
+
+        lower_yellow = np.array([25, 70, 120])
+        upper_yellow = np.array([30, 255, 255])
+        yellow_mask = cv2.inRange(img, lower_yellow, upper_yellow)
+        cnts_yellow = imutils.grab_contours(
+            cv2.findContours(yellow_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        )
+
+        lower_red = np.array([0, 50, 120])
+        upper_red = np.array([10, 255, 255])
+        red_mask = cv2.inRange(img, lower_red, upper_red)
+        cnts_red = imutils.grab_contours(
+            cv2.findContours(red_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        )
+
+        for clr, contours in zip(
+            ("blue", "green", "yellow", "red"),
+            (cnts_blue, cnts_green, cnts_yellow, cnts_red),
+        ):
+            for cnt in contours:
+                area = cv2.contourArea(cnt)
+                if area > 500:
+                    cv2.drawContours(img, [cnt], -1, (0, 255, 0), 3)
+                    M = cv2.moments(cnt)
+                    cX = int(M["m10"] / M["m00"]) if M["m00"] != 0 else 0
+                    cY = int(M["m01"] / M["m00"]) if M["m00"] != 0 else 0
+                    cv2.circle(img, (cX, cY), 7, (255, 255, 255), -1)
+                    cv2.putText(
+                        img,
+                        clr,
+                        (cX - 20, cY - 20),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        2.5,
+                        (255, 255, 255),
+                        3,
+                    )
+        cv2.imshow("colors", img)
 
 
 cam = Camera()
-cam.otsu_thresh()
+# cam.otsu_thresh()
+while True:
+    
+    cam.detect_colors(cam.get_image())
+
+    k = cv2.waitKey(5)
+    if k == 27:
+        break
