@@ -105,30 +105,30 @@ class Camera:
 
     def detect_colors(self, img):
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        lower_blue = np.array([110, 60, 0])
-        upper_blue = np.array([130, 255, 255])
+        lower_blue = np.array([50, 80, 160])
+        upper_blue = np.array([60, 110, 190])
         blue_mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
         cnts_blue = imutils.grab_contours(
             cv2.findContours(blue_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
-        lower_green = np.array([60, 70, 80])
-        upper_green = np.array([90, 255, 255])
+        lower_green = np.array([50, 130, 160])
+        upper_green = np.array([60, 150, 200])
         green_mask = cv2.inRange(hsv, lower_green, upper_green)
         cnts_green = imutils.grab_contours(
             cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
-        lower_yellow = np.array([170, 70, 120])
-        upper_yellow = np.array([200, 255, 255])
+        lower_yellow = np.array([20, 210, 180])
+        upper_yellow = np.array([30, 230, 200])
         yellow_mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
         cnts_yellow = imutils.grab_contours(
             cv2.findContours(yellow_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
-        lower_red = np.array([210, 50, 120])
-        upper_red = np.array([240, 255, 255])
+        lower_red = np.array([20, 235, 220])
+        upper_red = np.array([30, 255, 255])
         red_mask = cv2.inRange(hsv, lower_red, upper_red)
         cnts_red = imutils.grab_contours(
             cv2.findContours(red_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
