@@ -103,6 +103,31 @@ class Camera:
 
         return board_coord_to_image_coord
 
+    def detect_arucos(self, img):
+
+        
+        aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
+            img, aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
+        )
+        if ids is None:
+            cv2.imshow("aruco", img)
+            return
+        ids = ids.reshape((ids.shape[0],))
+        ids_to_corners = dict(zip(ids, aruco_corners))
+
+        for id, aruco_ in ids_to_corners.items():
+            cv2.circle(img, (int(aruco_[0][0][0]),int(aruco_[0][0][1])), 3, (255,20,20))
+            cv2.circle(img, (int(aruco_[0][1][0]),int(aruco_[0][1][1])), 3, (255,20,20))
+            cv2.circle(img, (int(aruco_[0][2][0]),int(aruco_[0][2][1])), 3, (255,20,20))
+            cv2.circle(img, (int(aruco_[0][3][0]),int(aruco_[0][3][1])), 3, (255,20,20))
+            cv2.putText(img, str(id), (int(aruco_[0][0][0]),int(aruco_[0][0][1])), 3, 3, (255,20,20))
+        cv2.imshow("aruco", img)
 
 cam = Camera()
-cam.otsu_thresh()
+# cam.otsu_thresh()
+while True:
+    cam.detect_arucos(cam.get_image())
+    k = cv2.waitKey(5)
+    if k == 27:
+        break
+
