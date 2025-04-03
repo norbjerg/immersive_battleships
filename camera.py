@@ -299,20 +299,6 @@ class Camera:
                         (255, 255, 255),
                         2,
                     )
-                    im_copy = img.copy()
-                    cv2.drawContours(im_copy, [cnt], -1, (0, 255, 0), 3)
-                    cv2.circle(im_copy, (cX, cY), 7, (255, 255, 255), -1)
-                    cv2.putText(
-                        im_copy,
-                        clr[0],
-                        (cX - 20, cY - 20),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.5,
-                        (255, 255, 255),
-                        2,
-                    )
-                    if clr[0] == "r":
-                        img_show(im_copy, clr)
         if show_img:
             cv2.imshow("colors", image)
         else:
@@ -326,8 +312,8 @@ cam = Camera()
 
 # i = 0
 while True:
-    # print(cam.otsu_thresh(cv2.imread("DEBUG-raw.png"), show_img=False))
-    # break
+    print(cam.otsu_thresh(cv2.imread("images/board_w_magenta.png"), show_img=False))
+    break
     img = cam.get_image()
     cam.otsu_thresh(img.copy(), show_img=True)
     k = cv2.waitKey(5)
