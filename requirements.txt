@@ -2,3 +2,6 @@
 pyserial
 cobs
 bitarray
+opencv-python
+opencv-contrib-python
+imutils

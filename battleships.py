@@ -163,19 +163,3 @@ class PlayerBoard:
             return GuessReturn.hit
 
         return GuessReturn.miss
-
-
-def main():
-    if tableActive:
-        t.clear()
-
-    game = Game((14, 12), [Ship((0,0),(4,0),1), Ship((13,11),(13,10),2)])
-    while True:
-        result = game.make_guess(eval(input(f"Player {game.current_player()} make a guess\n")))
-        print(result)
-        if result == GuessReturn.finished_game:
-            print(f"PLAYER {game.current_player()} WON")
-            return
-
-if __name__ == "__main__":
-    main()

@@ -1,4 +1,10 @@
+# Ignore .github repo
 .github/
+# Ignore any potential debug pictures, but keep development pngs
+*.png
+!images/*.png
+!Board_w_aruco.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
