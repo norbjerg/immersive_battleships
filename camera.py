@@ -1,7 +1,7 @@
 import cv2
 import imutils
 import numpy as np
-from cv2 import aruco
+from cv2 import aruco, typing
 
 BOT_LEFT_ARUCO_ID = 0
 TOP_RIGHT_ARUCO_ID = 1
@@ -10,13 +10,16 @@ BOARD_Y_MIN = 0
 BOARD_X_MAX = 13
 BOARD_Y_MAX = 11
 CLOSENESS_THRESHOLD = 2
-LEN_2_SHIP = "yellow"
-LEN_3_SHIP = "green"
-LEN_4_SHIP = "red"
-LEN_5_SHIP = "blue"
+BOUND_FEATHER = 10
+SHIP_COLOR_TO_LEN = {
+    "yellow": 2,
+    "green": 3,
+    "red": 4,
+    "blue": 5,
+}
 
 
-def show_img(img, title="lol"):
+def img_show(img, title="lol"):
     cv2.imshow(title, img)
     cv2.waitKey(0)
 
@@ -31,36 +34,65 @@ class Camera:
             return image
         raise RuntimeError("Could not capture image")
 
-    def otsu_thresh(self):
-        image = cv2.imread("Board_w_aruco.png")
-
+    def otsu_thresh(self, image: typing.MatLike, show_img: bool = False):
         aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
             image, aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
         )
 
+        if ids is None:
+            if show_img:
+                cv2.imshow("centers", image)
+                return
+            print("No arucos were found")
+            exit()
+
         ids = ids.reshape((ids.shape[0],))
         # four corners returned in their original order (which is clockwise starting with top left)
         ids_to_corners = dict(zip(ids, aruco_corners))
+        if (
+            BOT_LEFT_ARUCO_ID not in ids_to_corners
+            or TOP_RIGHT_ARUCO_ID not in ids_to_corners
+        ):
+            if show_img:
+                cv2.imshow("centers", image)
+                return
+            print(
+                "Arucos for corners:",
+                BOT_LEFT_ARUCO_ID,
+                TOP_RIGHT_ARUCO_ID,
+                "were not found",
+            )
+            exit()
 
         grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        cv2.imwrite("DEBUG-grey.png", grey)
+        if not show_img:
+            cv2.imwrite("DEBUG-grey.png", grey)
 
         gauss = cv2.GaussianBlur(grey, (5, 5), 0)
-        cv2.imwrite("DEBUG-gauss.png", gauss)
+        if not show_img:
+            cv2.imwrite("DEBUG-gauss.png", gauss)
 
         thresh = cv2.adaptiveThreshold(
             gauss, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 131, 15
         )
-        cv2.imwrite("DEBUG-thresh.png", thresh)
+        if not show_img:
+            cv2.imwrite("DEBUG-thresh.png", thresh)
         cnts, _ = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        cnt_img = image.copy()
+        cv2.drawContours(cnt_img, cnts, -1, (0, 255, 0), 3)
+        if not show_img:
+            cv2.imwrite("DEBUG-cont.png", cnt_img)
 
         centers = []
 
-        # Remove centers too close to each other
+        raw_centers = image.copy()
+
+        # Remove centers outside of the corners of the board
         for c in cnts:
             M = cv2.moments(c)
             cX = int(M["m10"] / M["m00"]) if M["m00"] != 0 else 0
             cY = int(M["m01"] / M["m00"]) if M["m00"] != 0 else 0
+            cv2.circle(raw_centers, (cX, cY), 5, (20, 120, 20), 3)
             if (
                 cX > ids_to_corners[BOT_LEFT_ARUCO_ID][0][1][0]  # top right corner x
                 and cY
@@ -74,6 +106,39 @@ class Camera:
             ):
                 centers.append((cX, cY))
 
+        filter_corner = image.copy()
+        for center in centers:
+            cv2.circle(filter_corner, center, 5, (20, 120, 20), 3)
+        cv2.imwrite("DEBUG-filter_corner.png", filter_corner)
+        cv2.imwrite("DEBUG-raw_centers.png", raw_centers)
+
+        # Add ships from colors
+        color_centers = self.detect_colors(image, show_img=False)
+
+        filtered_color_centers: dict[str, list[tuple[int, int]]] = {}
+        center_to_color: dict[tuple[int, int], str] = {}
+
+        # Filter out colors outside of the board
+        for clr, cnt_lst in color_centers.items():
+            for cX, cY in cnt_lst:
+                if (
+                    cX
+                    > ids_to_corners[BOT_LEFT_ARUCO_ID][0][1][0]  # top right corner x
+                    and cY
+                    < ids_to_corners[BOT_LEFT_ARUCO_ID][0][1][1]  # top right corner y
+                    and cX
+                    < ids_to_corners[TOP_RIGHT_ARUCO_ID][0][3][0]
+                    - 2  # bottom left corner x
+                    and cY
+                    > ids_to_corners[TOP_RIGHT_ARUCO_ID][0][3][1]
+                    + 2  # bottom left corner y
+                ):
+                    filtered_color_centers.setdefault(clr, [])
+                    filtered_color_centers[clr].append((cX, cY))
+                    centers.append((cX, cY))
+                    center_to_color[(cX, cY)] = clr
+
+        # Remove centers too close to each other
         remove_center = []
         checked = set()
         for idx0, (c0x, c0y) in enumerate(centers):
@@ -88,13 +153,59 @@ class Camera:
                 checked.add((idx0, idx1))
 
         for c in remove_center:
-            centers.pop(centers.index(c))
+            try:
+                centers.pop(centers.index(c))
+            except:
+                pass
 
-        # Add ships from colors
+        close_center = image.copy()
+        for center in centers:
+            cv2.circle(close_center, center, 5, (20, 120, 20), 3)
+        if not show_img:
+            cv2.imwrite("DEBUG-close_center.png", close_center)
+
+        # Remove black areas around ships
+        color_to_bound: dict[str, tuple[int, int, int, int]] = {}
+        for clr, center_lst in filtered_color_centers.items():
+            min_x, max_x, min_y, max_y = (
+                center_lst[0][0] - BOUND_FEATHER,
+                center_lst[0][1] + BOUND_FEATHER,
+                center_lst[0][0] - BOUND_FEATHER,
+                center_lst[0][1] + BOUND_FEATHER,
+            )
+            for cX, cY in center_lst[1:]:
+                if cX - BOUND_FEATHER < min_x:
+                    min_x = cX - BOUND_FEATHER
+                if cX + BOUND_FEATHER > max_x:
+                    max_x = cX + BOUND_FEATHER
+                if cY - BOUND_FEATHER < min_y:
+                    min_y = cY - BOUND_FEATHER
+                if cY + BOUND_FEATHER < max_y:
+                    max_y = cY + BOUND_FEATHER
+
+            color_to_bound[clr] = min_x, max_x, min_y, max_y
+
+        remove_center = set()
+        for cX, cY in centers:
+            if (cX, cY) in center_to_color:
+                continue
+            for _, (min_x, max_x, min_y, max_y) in color_to_bound.items():
+                if cX > min_x and cX < max_x and cY > min_y and cY < max_y:
+                    remove_center.add((cX, cY))
+
+        for c in remove_center:
+            try:
+                centers.pop(centers.index(c))
+            except:
+                pass
+
+        for _, (min_x, max_x, min_y, max_y) in color_to_bound.items():
+            cv2.rectangle(image, (min_x,min_y), (max_x,max_y), (255,255,20), 5)
 
         center_stack = centers.copy()
 
         board_coord_to_image_coord: dict[tuple[int, int], tuple[int, int]] = {}
+        ship_len_to_board_coords: dict[int, list[tuple[int, int]]] = {}
 
         y_counter = 0
         while y_counter <= BOARD_Y_MAX:
@@ -103,12 +214,29 @@ class Camera:
             row.sort(key=lambda c: c[0])
             for i, c in enumerate(row):
                 board_coord_to_image_coord[(BOARD_X_MAX - i, y_counter)] = c
+                if center_to_color.get(c):
+                    ship_len_to_board_coords.setdefault(
+                        SHIP_COLOR_TO_LEN[center_to_color[c]], []
+                    )
+                    ship_len_to_board_coords[
+                        SHIP_COLOR_TO_LEN[center_to_color[c]]
+                    ].append(
+                        (
+                            BOARD_X_MAX - i,
+                            y_counter,
+                        )
+                    )
             center_stack = center_stack[BOARD_X_MAX + 1 :]
             y_counter += 1
 
         for center in centers:
-            cv2.circle(image, center, 5, (20, 120, 20))
-        cv2.imwrite("DEBUG-centers.png", image)
+            cv2.circle(image, center, 5, (20, 120, 20), 3)
+        if not show_img:
+            cv2.imwrite("DEBUG-centers.png", image)
+        else:
+            cv2.imshow("centers", image)
+
+        return ship_len_to_board_coords
 
     def detect_colors(self, img, show_img: bool = True):
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -147,7 +275,7 @@ class Camera:
         )
 
         color_to_centers: dict[str, list[tuple[int, int]]] = {}
-
+        image = img.copy()
         for clr, contours in zip(
             ("blue", "green", "yellow", "red"),
             (cnts_blue, cnts_green, cnts_yellow, cnts_red),
@@ -160,33 +288,62 @@ class Camera:
                     cY = int(M["m01"] / M["m00"]) if M["m00"] != 0 else 0
                     color_to_centers.setdefault(clr, [])
                     color_to_centers[clr].append((cX, cY))
-                    if show_img:
-                        cv2.drawContours(img, [cnt], -1, (0, 255, 0), 3)
-                        cv2.circle(img, (cX, cY), 7, (255, 255, 255), -1)
-                        cv2.putText(
-                            img,
-                            clr,
-                            (cX - 20, cY - 20),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            2.5,
-                            (255, 255, 255),
-                            3,
-                        )
+                    cv2.drawContours(image, [cnt], -1, (0, 255, 0), 3)
+                    cv2.circle(image, (cX, cY), 7, (255, 255, 255), -1)
+                    cv2.putText(
+                        image,
+                        clr[0],
+                        (cX - 20, cY - 20),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (255, 255, 255),
+                        2,
+                    )
+                    im_copy = img.copy()
+                    cv2.drawContours(im_copy, [cnt], -1, (0, 255, 0), 3)
+                    cv2.circle(im_copy, (cX, cY), 7, (255, 255, 255), -1)
+                    cv2.putText(
+                        im_copy,
+                        clr[0],
+                        (cX - 20, cY - 20),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (255, 255, 255),
+                        2,
+                    )
+                    if clr[0] == "r":
+                        img_show(im_copy, clr)
         if show_img:
-            cv2.imshow("colors", img)
+            cv2.imshow("colors", image)
+        else:
+            cv2.imwrite("DEBUG-colors.png", image)
         return color_to_centers
 
 
 cam = Camera()
-i = 0
-# cam.otsu_thresh()
-while True:
-    l = cam.detect_colors(cv2.imread("./images/2_greens.jpg"))
-    if i == 0:
-        print(l)
-        i += 1
-    # cam.detect_colors(cam.get_image())
+# print(cam.otsu_thresh(cv2.imread("images/board_w_green.png")))
+# print(cam.otsu_thresh(cam.get_image()))
 
+# i = 0
+while True:
+    # print(cam.otsu_thresh(cv2.imread("DEBUG-raw.png"), show_img=False))
+    # break
+    img = cam.get_image()
+    cam.otsu_thresh(img.copy(), show_img=True)
     k = cv2.waitKey(5)
     if k == 27:
         break
+    if k == ord("d"):
+        cv2.imwrite("DEBUG-raw.png", img)
+
+# i = 0
+# while True:
+#     l = cam.detect_colors(cv2.imread("./images/2_smaller_greens.jpg"))
+#     if i == 0:
+#         print(l)
+#         i += 1
+#     # cam.detect_colors(cam.get_image())
+
+#     k = cv2.waitKey(5)
+#     if k == 27:
+#         break
