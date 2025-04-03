@@ -32,25 +32,28 @@ class Ship:
 
     player signifies which player the ship belongs to
     """
-    def __init__(self, start_pos: tuple[int, int], end_pos: tuple[int, int], player: int) -> None:
-        startx, starty = start_pos
-        endx, endy = end_pos
+    def __init__(self, sections: list[tuple[int, int]], player: int) -> None:
+        if not sections or len(sections) <= 1:
+            raise ValueError("Ship must have at least two sections")
         self.player = player
 
-        if startx - endx != 0 and starty - endy != 0:
-            raise ValueError("Invalid ship configuration")
+        xs = [x for x,y in sections]
+        ys = [y for x,y in sections]
 
-        if startx - endx > 0:
-            self.filled = {(startx - i, starty) for i in range((startx - endx) + 1)}
-        elif startx - endx < 0:
-            self.filled = {(startx + i, starty) for i in range((endx - startx) + 1)}
-        elif starty - endy > 0:
-            self.filled = {(startx, starty - i) for i in range((starty - endy) + 1)}
-        elif starty - endy < 0:
-            self.filled = {(startx, starty + i) for i in range((endy - starty) + 1)}
+        if all(x == xs[0] for x in xs):
+            sorted_ys = sorted(ys)
+            expected = list(range(sorted_ys[0], sorted_ys[0] + len(sections)))
+            if sorted_ys != expected:
+                raise ValueError(f"Invalid vertical ship: got {sorted_ys}, expected {expected}")
+        elif all(y == ys[0] for y in ys):
+            sorted_xs = sorted(xs)
+            expected = list(range(sorted_xs[0], sorted_xs[0] + len(sections)))
+            if sorted_xs != expected:
+                raise ValueError(f"Invalid vertical ship: got {sorted_xs}, expected {expected}")
         else:
-            raise ValueError("Invalid ship configuration")
+            raise ValueError("Ship sections must be in a straight line")
 
+        self.filled = set(sections)
         self.lives = len(self.filled)
 
 class Game:
