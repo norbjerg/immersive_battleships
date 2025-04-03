@@ -19,7 +19,7 @@ def show_img(img, title="lol"):
 
 class Camera:
     def __init__(self):
-        self.cam = cv2.VideoCapture(4)
+        self.cam = cv2.VideoCapture(1)
 
     def get_image(self) -> np.ndarray:
         result, image = self.cam.read()
@@ -105,7 +105,7 @@ class Camera:
 
     def detect_colors(self, img):
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        lower_blue = np.array([100, 100, 100])
+        lower_blue = np.array([100, 100, 50])
         upper_blue = np.array([130, 255, 255])
         blue_mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
@@ -145,7 +145,7 @@ class Camera:
         ):
             for cnt in contours:
                 area = cv2.contourArea(cnt)
-                if area > 500:
+                if area > 50:
                     cv2.drawContours(img, [cnt], -1, (0, 255, 0), 3)
                     M = cv2.moments(cnt)
                     cX = int(M["m10"] / M["m00"]) if M["m00"] != 0 else 0
@@ -166,7 +166,8 @@ class Camera:
 cam = Camera()
 # cam.otsu_thresh()
 while True:
-    cam.detect_colors(cv2.imread("colorscale.png"))
+    # cam.detect_colors(cv2.imread("./images/colorscale.png"))
+    cam.detect_colors(cam.get_image())
 
     k = cv2.waitKey(5)
     if k == 27:
