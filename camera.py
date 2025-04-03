@@ -10,6 +10,10 @@ BOARD_Y_MIN = 0
 BOARD_X_MAX = 13
 BOARD_Y_MAX = 11
 CLOSENESS_THRESHOLD = 2
+LEN_2_SHIP = "yellow"
+LEN_3_SHIP = "green"
+LEN_4_SHIP = "red"
+LEN_5_SHIP = "blue"
 
 
 def show_img(img, title="lol"):
@@ -52,6 +56,7 @@ class Camera:
 
         centers = []
 
+        # Remove centers too close to each other
         for c in cnts:
             M = cv2.moments(c)
             cX = int(M["m10"] / M["m00"]) if M["m00"] != 0 else 0
@@ -85,6 +90,8 @@ class Camera:
         for c in remove_center:
             centers.pop(centers.index(c))
 
+        # Add ships from colors
+
         center_stack = centers.copy()
 
         board_coord_to_image_coord: dict[tuple[int, int], tuple[int, int]] = {}
@@ -103,7 +110,7 @@ class Camera:
             cv2.circle(image, center, 5, (20, 120, 20))
         cv2.imwrite("DEBUG-centers.png", image)
 
-    def detect_colors(self, img):
+    def detect_colors(self, img, show_img: bool = True):
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         lower_blue = np.array([100, 100, 50])
         upper_blue = np.array([130, 255, 255])
@@ -139,6 +146,8 @@ class Camera:
             cv2.findContours(red_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
+        color_to_centers: dict[str, list[tuple[int, int]]] = {}
+
         for clr, contours in zip(
             ("blue", "green", "yellow", "red"),
             (cnts_blue, cnts_green, cnts_yellow, cnts_red),
@@ -146,28 +155,37 @@ class Camera:
             for cnt in contours:
                 area = cv2.contourArea(cnt)
                 if area > 50:
-                    cv2.drawContours(img, [cnt], -1, (0, 255, 0), 3)
                     M = cv2.moments(cnt)
                     cX = int(M["m10"] / M["m00"]) if M["m00"] != 0 else 0
                     cY = int(M["m01"] / M["m00"]) if M["m00"] != 0 else 0
-                    cv2.circle(img, (cX, cY), 7, (255, 255, 255), -1)
-                    cv2.putText(
-                        img,
-                        clr,
-                        (cX - 20, cY - 20),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        2.5,
-                        (255, 255, 255),
-                        3,
-                    )
-        cv2.imshow("colors", img)
+                    color_to_centers.setdefault(clr, [])
+                    color_to_centers[clr].append((cX, cY))
+                    if show_img:
+                        cv2.drawContours(img, [cnt], -1, (0, 255, 0), 3)
+                        cv2.circle(img, (cX, cY), 7, (255, 255, 255), -1)
+                        cv2.putText(
+                            img,
+                            clr,
+                            (cX - 20, cY - 20),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            2.5,
+                            (255, 255, 255),
+                            3,
+                        )
+        if show_img:
+            cv2.imshow("colors", img)
+        return color_to_centers
 
 
 cam = Camera()
+i = 0
 # cam.otsu_thresh()
 while True:
-    # cam.detect_colors(cv2.imread("./images/colorscale.png"))
-    cam.detect_colors(cam.get_image())
+    l = cam.detect_colors(cv2.imread("./images/2_greens.jpg"))
+    if i == 0:
+        print(l)
+        i += 1
+    # cam.detect_colors(cam.get_image())
 
     k = cv2.waitKey(5)
     if k == 27:
