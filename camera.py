@@ -12,7 +12,7 @@ BOARD_Y_MAX = 11
 CLOSENESS_THRESHOLD = 2
 BOUND_FEATHER = 10
 SHIP_COLOR_TO_LEN = {
-    "yellow": 2,
+    "magenta": 2,
     "green": 3,
     "red": 4,
     "blue": 5,
@@ -255,11 +255,11 @@ class Camera:
             cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
-        lower_yellow = np.array([15, 100, 100])
-        upper_yellow = np.array([35, 255, 255])
-        yellow_mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
-        cnts_yellow = imutils.grab_contours(
-            cv2.findContours(yellow_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        lower_magenta = np.array([140, 100, 100])
+        upper_magenta = np.array([170, 255, 255])
+        magenta_mask = cv2.inRange(hsv, lower_magenta, upper_magenta)
+        cnts_magenta = imutils.grab_contours(
+            cv2.findContours(magenta_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
         lower_red1 = np.array([0, 100, 100])
@@ -277,8 +277,8 @@ class Camera:
         color_to_centers: dict[str, list[tuple[int, int]]] = {}
         image = img.copy()
         for clr, contours in zip(
-            ("blue", "green", "yellow", "red"),
-            (cnts_blue, cnts_green, cnts_yellow, cnts_red),
+            ("blue", "green", "magenta", "red"),
+            (cnts_blue, cnts_green, cnts_magenta, cnts_red),
         ):
             for cnt in contours:
                 area = cv2.contourArea(cnt)
