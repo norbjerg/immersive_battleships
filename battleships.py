@@ -8,7 +8,7 @@ from port import Port
 tableActive = False
 
 if (tableActive):
-    t = Table(Port) #Change port in port.py to match the port of arduino
+    t = Table(Port)
 
 AVAILABLE_SHIPS = {
     2: 1,
@@ -68,6 +68,12 @@ class Game:
         self.p2_board = PlayerBoard((self.width//2, self.width-1),(0,self.height-1),[ship for ship in ships if ship.player == 2], 2)
         self.alternate = self.alternator()
         self.switch_turn()
+        print(self.width)
+        print(self.height)
+        print(self.p1_board.x)
+        print(self.p1_board.y)
+        print(self.p2_board.x)
+        print(self.p2_board.y)
 
     def alternator(self):
         while True:

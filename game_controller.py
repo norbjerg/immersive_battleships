@@ -2,18 +2,19 @@ from camera import Camera
 from battleships import Game, Ship, GuessReturn
 
 class GameController:
-    def __init__(self, camera: Camera):
+    def __init__(self, camera: Camera, dev: bool):
         self.camera = camera
         self.board_size = (14,12)# Get board size from camera here
-        self.ships: list[Ship] = [Ship([(0,0),(0,1),(0,2)], 1), Ship([(0,11),(0,12),(0,13)], 2)# Get ships from the camera her
-        self.game = Game(board_size=board_size, ships=self.ships)
+        self.ships: list[Ship] = self.get_ships()# Get ships from the camera her
+        self.game = Game(board_size=self.board_size, ships=self.ships)
+        self.dev = dev
 
     def get_ships(self) -> list[Ship]:
         """
         Converts raw ship data from the camera into Ship objects.
         Each ship is a list of coordinates.
         """
-        camera_ships = [[(0,0),(0,1),(0,2)],[(0,11),(0,12),(0,13)]] #self.camera.read_ships() #Read ships from camera here
+        camera_ships = [[(0,0),(0,1),(0,2)],[(13,0),(12,0),(11,0)]] #self.camera.read_ships() #Read ships from camera here
         ships: list[Ship] = []
 
         for sections in camera_ships:
@@ -44,18 +45,19 @@ class GameController:
         """
         while True:
             print(f"Player {self.game.current_player()}'s turn")
-
-            guess = # Read guess from camera here
-            # Standin input from the commandline
-            try:
-                raw_input = input("Enter your guess (x,y): ").strip()
-                x_str, y_str = raw_input.split(",")
-                guess = (int(x_str), int(y_str))
-            except ValueError:
-                print("Invalid input format. Please enter coordinates like '3,5'.\n")
-                continue
-                if not guess:
+            if (self.dev):
+                try:
+                    raw_input = input("Enter your guess (x,y): ").strip()
+                    x_str, y_str = raw_input.split(",")
+                    guess = (int(x_str), int(y_str))
+                except ValueError:
+                    print("Invalid input format. Please enter coordinates like '3,5'.\n")
                     continue
+                    if not guess:
+                        continue
+            if (not self.dev):
+                print("Not in dev mode")
+                #Get guess from camera here
 
             result = self.game.make_guess(guess)
 

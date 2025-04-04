@@ -175,18 +175,3 @@ class Camera:
         if show_img:
             cv2.imshow("colors", img)
         return color_to_centers
-
-
-cam = Camera()
-i = 0
-# cam.otsu_thresh()
-while True:
-    l = cam.detect_colors(cv2.imread("./images/2_greens.jpg"))
-    if i == 0:
-        print(l)
-        i += 1
-    # cam.detect_colors(cam.get_image())
-
-    k = cv2.waitKey(5)
-    if k == 27:
-        break
