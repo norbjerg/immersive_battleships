@@ -17,6 +17,12 @@ SHIP_COLOR_TO_LEN = {
     "red": 4,
     "blue": 5,
 }
+COLOR_TO_BGR = {
+    "blue": (255, 20, 20),
+    "magenta": (236, 0, 252),
+    "green": (20, 255, 20),
+    "red": (20, 20, 255),
+}
 
 
 def img_show(img, title="lol"):
@@ -200,7 +206,7 @@ class Camera:
                 pass
 
         for _, (min_x, max_x, min_y, max_y) in color_to_bound.items():
-            cv2.rectangle(image, (min_x,min_y), (max_x,max_y), (255,255,20), 5)
+            cv2.rectangle(image, (min_x, min_y), (max_x, max_y), (255, 255, 20), 5)
 
         center_stack = centers.copy()
 
@@ -288,7 +294,7 @@ class Camera:
                     cY = int(M["m01"] / M["m00"]) if M["m00"] != 0 else 0
                     color_to_centers.setdefault(clr, [])
                     color_to_centers[clr].append((cX, cY))
-                    cv2.drawContours(image, [cnt], -1, (0, 255, 0), 3)
+                    cv2.drawContours(image, [cnt], -1, COLOR_TO_BGR[clr], 3)
                     cv2.circle(image, (cX, cY), 7, (255, 255, 255), -1)
                     cv2.putText(
                         image,
