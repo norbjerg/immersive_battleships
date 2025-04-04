@@ -5,6 +5,7 @@ from cv2 import aruco, typing
 
 BOT_LEFT_ARUCO_ID = 0
 TOP_RIGHT_ARUCO_ID = 1
+CORNER_ARUCO_SIZE_MM = 45
 BOARD_X_MIN = 0
 BOARD_Y_MIN = 0
 BOARD_X_MAX = 13
@@ -41,34 +42,7 @@ class Camera:
         raise RuntimeError("Could not capture image")
 
     def otsu_thresh(self, image: typing.MatLike, show_img: bool = False):
-        aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
-            image, aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
-        )
-
-        if ids is None:
-            if show_img:
-                cv2.imshow("centers", image)
-                return
-            print("No arucos were found")
-            exit()
-
-        ids = ids.reshape((ids.shape[0],))
-        # four corners returned in their original order (which is clockwise starting with top left)
-        ids_to_corners = dict(zip(ids, aruco_corners))
-        if (
-            BOT_LEFT_ARUCO_ID not in ids_to_corners
-            or TOP_RIGHT_ARUCO_ID not in ids_to_corners
-        ):
-            if show_img:
-                cv2.imshow("centers", image)
-                return
-            print(
-                "Arucos for corners:",
-                BOT_LEFT_ARUCO_ID,
-                TOP_RIGHT_ARUCO_ID,
-                "were not found",
-            )
-            exit()
+        ids_to_corners = self.get_ids_to_corners_aruco(image, show_img)
 
         grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         if not show_img:
@@ -311,23 +285,90 @@ class Camera:
             cv2.imwrite("DEBUG-colors.png", image)
         return color_to_centers
 
+    def get_ids_to_corners_aruco(self, image, show_img: bool = True):
+        aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
+            image, aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
+        )
+
+        if ids is None:
+            if show_img:
+                cv2.imshow("centers", image)
+                return {}
+            print("No arucos were found")
+            exit()
+
+        ids = ids.reshape((ids.shape[0],))
+        # four corners returned in their original order (which is clockwise starting with top left)
+        ids_to_corners = dict(zip(ids, aruco_corners))
+        if (
+            BOT_LEFT_ARUCO_ID not in ids_to_corners
+            or TOP_RIGHT_ARUCO_ID not in ids_to_corners
+        ):
+            if show_img:
+                cv2.imshow("centers", image)
+                return {}
+            print(
+                "Arucos for corners:",
+                BOT_LEFT_ARUCO_ID,
+                TOP_RIGHT_ARUCO_ID,
+                "were not found",
+            )
+            exit()
+        return ids_to_corners
+
+    def detect_holes_from_aruco(self, image, show_img: bool = True):
+        ids_to_corners = self.get_ids_to_corners_aruco(image, show_img)
+
+        pixel_side_len = 0
+
+        for corners in ids_to_corners.values():
+            side_len_sum = 0
+            for idx, (cornerX, cornerY) in enumerate(corners[0][1:]):
+                prev_cornerX, prev_cornerY = corners[0][idx]
+                side_len_sum += (
+                    (prev_cornerX - cornerX) ** 2 + (prev_cornerY - cornerY) ** 2
+                ) ** 0.5
+
+            pixel_side_len += side_len_sum / 3
+        pixel_side_len = int(pixel_side_len // 2)
+
+        mm_per_px = CORNER_ARUCO_SIZE_MM / pixel_side_len
+        px_per_mm = pixel_side_len / CORNER_ARUCO_SIZE_MM
+
+        id1_corners: list[list[int]] = list(ids_to_corners[TOP_RIGHT_ARUCO_ID][0])
+        id1_corners.sort(key=lambda c: c[1], reverse=True)
+        id1_corners = id1_corners[:2]
+        id1_corners.sort(key=lambda c: c[0])
+        bottom_left_corner_id1 = id1_corners[0]
+        
+        origin = (int(bottom_left_corner_id1[0]-7.5*px_per_mm), int(bottom_left_corner_id1[1]+7.5*px_per_mm))
+        cv2.circle(image,origin,5,(20,20,255))
+
+        for i in range(BOARD_X_MAX+1):
+            for j in range(BOARD_Y_MAX+1):
+                if i+j==0:
+                    continue
+                cv2.circle(image,(origin[0]-22*i,origin[1]+22*j),5,(20,20,255))
+                
+
+        img_show(image)
 
 cam = Camera()
 # print(cam.otsu_thresh(cv2.imread("images/board_w_green.png")))
 # print(cam.otsu_thresh(cam.get_image()))
 
-# i = 0
+cam.detect_holes_from_aruco(cv2.imread("images/board_clear2.png"))
 
-while True:
-    print(cam.otsu_thresh(cv2.imread("images/board_w_magenta.png"), show_img=False))
-    break
-    img = cam.get_image()
-    cam.otsu_thresh(img.copy(), show_img=True)
-    k = cv2.waitKey(5)
-    if k == 27:
-        break
-    if k == ord("d"):
-        cv2.imwrite("DEBUG-raw.png", img)
+# while True:
+#     print(cam.otsu_thresh(cv2.imread("images/board_w_magenta.png"), show_img=False))
+#     break
+#     img = cam.get_image()
+#     cam.otsu_thresh(img.copy(), show_img=True)
+#     k = cv2.waitKey(5)
+#     if k == 27:
+#         break
+#     if k == ord("d"):
+#         cv2.imwrite("DEBUG-raw.png", img)
 
 # i = 0
 # while True:
