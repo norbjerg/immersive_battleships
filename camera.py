@@ -261,7 +261,7 @@ class Camera:
             cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
-        lower_magenta = np.array([140, 100, 100])
+        lower_magenta = np.array([140, 100, 50])
         upper_magenta = np.array([170, 255, 255])
         magenta_mask = cv2.inRange(hsv, lower_magenta, upper_magenta)
         cnts_magenta = imutils.grab_contours(
@@ -317,6 +317,7 @@ cam = Camera()
 # print(cam.otsu_thresh(cam.get_image()))
 
 # i = 0
+
 while True:
     print(cam.otsu_thresh(cv2.imread("images/board_w_magenta.png"), show_img=False))
     break
