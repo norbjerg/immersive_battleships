@@ -318,14 +318,21 @@ class Camera:
         )
         if player == 1:
             crop_img = image[180:320, 60:125]
+            aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
+            crop_img, aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
+            )
+
+            return (ids[1][0].item(), ids[0][0].item())
         elif player == 0:
             crop_img = image[180:320, 360:425]
-        aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
+            aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
             crop_img, aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
-        )
+            )
 
+            return (ids[0][0].item(), ids[1][0].item())
+
+        return -1
         # player = (player + 1) % 2
-        return (ids[0][0].item(), ids[1][0].item())
 
 
 
@@ -362,8 +369,8 @@ while True:
         break
     if k == ord("d"):
         coords = cam.detect_guess(player, "images/boardtest3.png")
-        player = (player + 1) % 2
         print(player, coords)
+        player = (player + 1) % 2
         
     # print(cam.otsu_thresh(cv2.imread("images/board_w_magenta.png"), show_img=False))
     # img = cam.get_image()
