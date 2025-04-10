@@ -10,9 +10,11 @@ BOARD_X_MAX = 13
 BOARD_Y_MAX = 11
 CLOSENESS_THRESHOLD = 2
 
+
 def show_img(img, title="lol"):
     cv2.imshow(title, img)
     cv2.waitKey(0)
+
 
 class Camera:
     def __init__(self):
@@ -72,29 +74,28 @@ class Camera:
             for idx1, (c1x, c1y) in enumerate(centers):
                 if idx0 == idx1:
                     continue
-                if (idx1,idx0) in checked:
+                if (idx1, idx0) in checked:
                     continue
-                dist = ((c0x-c1x)**2+(c0y-c1y)**2)**0.5
+                dist = ((c0x - c1x) ** 2 + (c0y - c1y) ** 2) ** 0.5
                 if dist <= CLOSENESS_THRESHOLD:
                     remove_center.append(centers[idx0])
-                checked.add((idx0,idx1))
+                checked.add((idx0, idx1))
 
         for c in remove_center:
             centers.pop(centers.index(c))
 
-
         center_stack = centers.copy()
 
-        board_coord_to_image_coord: dict[tuple[int,int],tuple[int,int]] = {}
+        board_coord_to_image_coord: dict[tuple[int, int], tuple[int, int]] = {}
 
         y_counter = 0
         while y_counter <= BOARD_Y_MAX:
             center_stack.sort(key=lambda c: c[1])
-            row = center_stack[BOARD_X_MIN: BOARD_X_MAX+1]
+            row = center_stack[BOARD_X_MIN : BOARD_X_MAX + 1]
             row.sort(key=lambda c: c[0])
             for i, c in enumerate(row):
                 board_coord_to_image_coord[(BOARD_X_MAX - i, y_counter)] = c
-            center_stack = center_stack[BOARD_X_MAX+1:]
+            center_stack = center_stack[BOARD_X_MAX + 1 :]
             y_counter += 1
 
         for center in centers:
@@ -104,8 +105,6 @@ class Camera:
         return board_coord_to_image_coord
 
     def detect_arucos(self, img):
-
-        
         aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
             img, aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
         )
@@ -116,18 +115,36 @@ class Camera:
         ids_to_corners = dict(zip(ids, aruco_corners))
 
         for id, aruco_ in ids_to_corners.items():
-            cv2.circle(img, (int(aruco_[0][0][0]),int(aruco_[0][0][1])), 3, (255,20,20))
-            cv2.circle(img, (int(aruco_[0][1][0]),int(aruco_[0][1][1])), 3, (255,20,20))
-            cv2.circle(img, (int(aruco_[0][2][0]),int(aruco_[0][2][1])), 3, (255,20,20))
-            cv2.circle(img, (int(aruco_[0][3][0]),int(aruco_[0][3][1])), 3, (255,20,20))
-            cv2.putText(img, str(id), (int(aruco_[0][0][0]),int(aruco_[0][0][1])), 3, 3, (255,20,20))
+            cv2.circle(
+                img, (int(aruco_[0][0][0]), int(aruco_[0][0][1])), 3, (255, 20, 20)
+            )
+            cv2.circle(
+                img, (int(aruco_[0][1][0]), int(aruco_[0][1][1])), 3, (255, 20, 20)
+            )
+            cv2.circle(
+                img, (int(aruco_[0][2][0]), int(aruco_[0][2][1])), 3, (255, 20, 20)
+            )
+            cv2.circle(
+                img, (int(aruco_[0][3][0]), int(aruco_[0][3][1])), 3, (255, 20, 20)
+            )
+            cv2.putText(
+                img,
+                str(id),
+                (int(aruco_[0][0][0]), int(aruco_[0][0][1])),
+                3,
+                3,
+                (255, 20, 20),
+            )
         cv2.imshow("aruco", img)
+
 
 cam = Camera()
 # cam.otsu_thresh()
 while True:
-    cam.detect_arucos(cam.get_image())
+    img = cam.get_image()
+    cam.detect_arucos(img.copy())
     k = cv2.waitKey(5)
     if k == 27:
         break
-
+    if k == ord("d"):
+        cv2.imwrite("DEBUG-image.png", img)
