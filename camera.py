@@ -23,7 +23,55 @@ COLOR_TO_BGR = {
     "green": (20, 255, 20),
     "red": (20, 20, 255),
 }
+PLAYER1_VERTICAL_NUMBER_TO_ARUCO_ID = {
+    0: 10,
+    1: 11,
+    2: 12,
+    3: 13,
+    4: 14,
+    5: 15,
+    6: 16,
+}
+PLAYER1_HORIZONTAL_LETTER_TO_ARUCO_ID = {
+    "A": 17,
+    "B": 18,
+    "C": 19,
+    "D": 20,
+    "E": 21,
+    "F": 22,
+    "G": 23,
+    "H": 24,
+    "I": 25,
+    "J": 26,
+    "K": 27,
+    "L": 28,
+}
+PLAYER1_GUESS_SHOWER = 29
 
+PLAYER2_VERTICAL_NUMBER_TO_ARUCO_ID = {
+    0: 30,
+    1: 31,
+    2: 32,
+    3: 33,
+    4: 34,
+    5: 35,
+    6: 36,
+}
+PLAYER2_HORIZONTAL_LETTER_TO_ARUCO_ID = {
+    "A": 37,
+    "B": 38,
+    "C": 39,
+    "D": 40,
+    "E": 41,
+    "F": 42,
+    "G": 43,
+    "H": 44,
+    "I": 45,
+    "J": 46,
+    "K": 47,
+    "L": 48,
+}
+PLAYER2_GUESS_SHOWER = 49
 
 def img_show(img, title="lol"):
     cv2.imshow(title, img)
