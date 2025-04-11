@@ -16,7 +16,7 @@ class GameStatus(Enum):
 
 class InterfaceBoard:
     def __init__(
-        self, corner: tuple[int, int], size: tuple[int, int], dim: tuple[int, int]
+        self, corner: tuple[int, int], size: tuple[int, int], dim: tuple[int, int], player_num: int
     ) -> None:
         x_size, y_size = size
         width, height = dim
@@ -70,6 +70,8 @@ class InterfaceBoard:
             for y in range(y_size)
         }
 
+        self.player_num = text.Label(str(player_num), corner[0] + width // 2, 100, color=(255,255,255,255), font_size=40)
+
         self.misses: list[shapes.ShapeBase] = []
         self.hits: list[text.DocumentLabel] = []
 
@@ -106,6 +108,7 @@ class InterfaceBoard:
     def figures(self):
         return [
             self.board,
+            self.player_num,
             *self.xnumbers,
             *self.ynumbers,
             *self.board_coordinate_to_dot.values(),
@@ -137,6 +140,7 @@ class Interface(pyglet.window.Window):
             ),
             (x_size, y_size),
             (width, height),
+            1
         )
 
         self.board2 = InterfaceBoard(
@@ -146,6 +150,7 @@ class Interface(pyglet.window.Window):
             ),
             (x_size, y_size),
             (width, height),
+            2
         )
         print(self.width)
 
