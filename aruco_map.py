@@ -1,32 +1,8 @@
-PLAYER1_GUESS_CONFIRM = 29
-PLAYER2_GUESS_CONFIRM = 49
+PLAYER1_GUESS_CONFIRM = 49
+PLAYER2_GUESS_CONFIRM = 29
 
-
+# Note that these are the arucos, that player x will be able to guess on
 PLAYER1_VERTICAL_Y_COORD_TO_ARUCO_ID = {
-    10: 0,
-    11: 1,
-    12: 2,
-    13: 3,
-    14: 4,
-    15: 5,
-    16: 6,
-}
-PLAYER1_HORIZONTAL_X_COORD_TO_ARUCO_ID = {
-    17: 0,
-    18: 1,
-    19: 2,
-    20: 3,
-    21: 4,
-    22: 5,
-    23: 6,
-    24: 7,
-    25: 8,
-    26: 9,
-    27: 10,
-    28: 11,
-}
-
-PLAYER2_VERTICAL_Y_COORD_TO_ARUCO_ID = {
     30: 7,
     31: 8,
     32: 9,
@@ -35,7 +11,7 @@ PLAYER2_VERTICAL_Y_COORD_TO_ARUCO_ID = {
     35: 12,
     36: 13,
 }
-PLAYER2_HORIZONTAL_X_COORD_TO_ARUCO_ID = {
+PLAYER1_HORIZONTAL_X_COORD_TO_ARUCO_ID = {
     37: 0,
     38: 1,
     39: 2,
@@ -48,6 +24,30 @@ PLAYER2_HORIZONTAL_X_COORD_TO_ARUCO_ID = {
     46: 9,
     47: 10,
     48: 11,
+}
+
+PLAYER2_VERTICAL_Y_COORD_TO_ARUCO_ID = {
+    10: 0,
+    11: 1,
+    12: 2,
+    13: 3,
+    14: 4,
+    15: 5,
+    16: 6,
+}
+PLAYER2_HORIZONTAL_X_COORD_TO_ARUCO_ID = {
+    17: 0,
+    18: 1,
+    19: 2,
+    20: 3,
+    21: 4,
+    22: 5,
+    23: 6,
+    24: 7,
+    25: 8,
+    26: 9,
+    27: 10,
+    28: 11,
 }
 
 

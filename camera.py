@@ -2,7 +2,6 @@ import cv2
 import imutils
 import numpy as np
 from cv2 import aruco, typing
-import aruco_map
 
 BOT_LEFT_ARUCO_ID = 0
 TOP_RIGHT_ARUCO_ID = 1
@@ -24,7 +23,6 @@ COLOR_TO_BGR = {
     "green": (20, 255, 20),
     "red": (20, 20, 255),
 }
-
 
 
 def img_show(img, title="lol"):
@@ -322,18 +320,6 @@ class Camera:
         ids = ids.reshape((ids.shape[0],))
         return [int(id) for id in ids]
 
-    def get_guess_coords(self, img, player_num: int):
-        ids = self.get_ids_of_detected_arucos(img)
-
-        if player_num == 1:
-            x_map = aruco_map.PLAYER1_HORIZONTAL_X_COORD_TO_ARUCO_ID
-            y_map = aruco_map.PLAYER1_VERTICAL_Y_COORD_TO_ARUCO_ID
-        else:
-            x_map = aruco_map.PLAYER2_HORIZONTAL_X_COORD_TO_ARUCO_ID
-            y_map = aruco_map.PLAYER2_VERTICAL_Y_COORD_TO_ARUCO_ID
-
-        x_range = 
-
     def detect_arucos(self, img):
         aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
             img, aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
@@ -366,34 +352,3 @@ class Camera:
                 (255, 20, 20),
             )
         cv2.imshow("aruco", img)
-
-
-cam = Camera()
-print(cam.get_ids_of_detected_arucos(cv2.imread("DEBUG-image.png")))
-# print(cam.otsu_thresh(cv2.imread("images/board_w_green.png")))
-# print(cam.otsu_thresh(cam.get_image()))
-
-# i = 0
-
-# while True:
-#     print(cam.otsu_thresh(cv2.imread("images/board_w_magenta.png"), show_img=False))
-#     break
-#     img = cam.get_image()
-#     cam.otsu_thresh(img.copy(), show_img=True)
-#     k = cv2.waitKey(5)
-#     if k == 27:
-#         break
-#     if k == ord("d"):
-#         cv2.imwrite("DEBUG-raw.png", img)
-
-# i = 0
-# while True:
-#     l = cam.detect_colors(cv2.imread("./images/2_smaller_greens.jpg"))
-#     if i == 0:
-#         print(l)
-#         i += 1
-#     # cam.detect_colors(cam.get_image())
-
-#     k = cv2.waitKey(5)
-#     if k == 27:
-#         break

@@ -1,11 +1,15 @@
+from time import sleep
+import aruco_map
+from battleships import Game, GuessReturn, Ship
 from camera import Camera
-from battleships import Game, Ship, GuessReturn
+import cv2
+
 
 class GameController:
     def __init__(self, camera: Camera, dev: bool):
         self.camera = camera
-        self.board_size = (14,12)# Get board size from camera here
-        self.ships: list[Ship] = self.get_ships()# Get ships from the camera her
+        self.board_size = (14, 12)  # Get board size from camera here
+        self.ships: list[Ship] = self.get_ships()  # Get ships from the camera her
         self.game = Game(board_size=self.board_size, ships=self.ships)
         self.dev = dev
 
@@ -14,7 +18,10 @@ class GameController:
         Converts raw ship data from the camera into Ship objects.
         Each ship is a list of coordinates.
         """
-        camera_ships = [[(0,0),(0,1),(0,2)],[(13,0),(12,0),(11,0)]] #self.camera.read_ships() #Read ships from camera here
+        camera_ships = [
+            [(0, 0), (0, 1), (0, 2)],
+            [(13, 0), (12, 0), (11, 0)],
+        ]  # self.camera.read_ships() #Read ships from camera here
         ships: list[Ship] = []
 
         for sections in camera_ships:
@@ -39,25 +46,67 @@ class GameController:
 
         return ships
 
+    def get_guess(self, img: cv2.typing.MatLike | None = None) -> tuple[int, int] | None:
+        img = img if img is not None else self.camera.get_image()
+        ids = self.camera.get_ids_of_detected_arucos(img)
+        player_num = self.game.current_player()
+
+        if player_num == 1:
+            x_map = aruco_map.PLAYER1_HORIZONTAL_X_COORD_TO_ARUCO_ID
+            y_map = aruco_map.PLAYER1_VERTICAL_Y_COORD_TO_ARUCO_ID
+            confirm = aruco_map.PLAYER1_GUESS_CONFIRM
+        else:
+            x_map = aruco_map.PLAYER2_HORIZONTAL_X_COORD_TO_ARUCO_ID
+            y_map = aruco_map.PLAYER2_VERTICAL_Y_COORD_TO_ARUCO_ID
+            confirm = aruco_map.PLAYER2_GUESS_CONFIRM
+        if confirm not in ids:
+            return None
+
+        x_range = range(min(x_map), max(x_map))
+        y_range = range(min(y_map), max(y_map))
+
+        xs = [id for id in ids if id in x_range]
+        ys = [id for id in ids if id in y_range]
+
+        if not xs or not ys:
+            return None
+
+        if len(xs) > 1 or len(ys) > 1:
+            print("More than one guess coord id found: xs", xs, "ys", ys)
+            return None
+
+        if xs[0] not in x_map or ys[0] not in y_map:
+            print("KeyError: xs0", xs[0], "ys0", ys[0])
+            return None
+
+        return x_map[xs[0]], y_map[ys[0]]
+
     def run(self):
         """
         Main game loop.
         """
         while True:
             print(f"Player {self.game.current_player()}'s turn")
-            if (self.dev):
+            if self.dev:
                 try:
                     raw_input = input("Enter your guess (x,y): ").strip()
                     x_str, y_str = raw_input.split(",")
                     guess = (int(x_str), int(y_str))
                 except ValueError:
-                    print("Invalid input format. Please enter coordinates like '3,5'.\n")
+                    print(
+                        "Invalid input format. Please enter coordinates like '3,5'.\n"
+                    )
                     continue
                     if not guess:
                         continue
-            if (not self.dev):
+            if not self.dev:
                 print("Not in dev mode")
-                #Get guess from camera here
+                # Get guess from camera here
+                guess = None
+                while guess is None:
+                    guess = self.get_guess()
+                    sleep(0.2)
+
 
             result = self.game.make_guess(guess)
 
