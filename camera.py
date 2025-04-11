@@ -33,8 +33,8 @@ def img_show(img, title="lol"):
 
 
 class Camera:
-    def __init__(self):
-        self.cam = cv2.VideoCapture(1)
+    def __init__(self, cam_num: int):
+        self.cam = cv2.VideoCapture(cam_num)
 
     def get_image(self) -> np.ndarray:
         result, image = self.cam.read()
