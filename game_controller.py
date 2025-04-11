@@ -1,8 +1,13 @@
+import time
 from time import sleep
+
+import cv2
+import pyglet
+
 import aruco_map
 from battleships import Game, GuessReturn, Ship
 from camera import Camera
-import cv2
+from ui import GameStatus, Interface
 
 
 class GameController:
@@ -46,7 +51,9 @@ class GameController:
 
         return ships
 
-    def get_guess(self, img: cv2.typing.MatLike | None = None) -> tuple[int, int] | None:
+    def get_guess(
+        self, img: cv2.typing.MatLike | None = None
+    ) -> tuple[int, int] | None:
         img = img if img is not None else self.camera.get_image()
         ids = self.camera.get_ids_of_detected_arucos(img)
         player_num = self.game.current_player()
@@ -81,14 +88,33 @@ class GameController:
 
         return x_map[xs[0]], y_map[ys[0]]
 
+    def handle_next_frame(self, last_time: float, interface: Interface):
+        if interface.key_handler[pyglet.window.key.ESCAPE]:
+            exit(0)
+
+        elapsed_time = time.perf_counter() - last_time
+        if elapsed_time > 1 / 60:
+            last_time = time.perf_counter()
+            interface.next_frame()
+        return last_time
+
     def run(self):
         """
         Main game loop.
         """
+        interface = Interface()
+        last_time = time.perf_counter()
+
         while True:
             print(f"Player {self.game.current_player()}'s turn")
+            interface.handle_game_status(
+                GameStatus.player_num_to_await(self.game.current_player())
+            )
             if self.dev:
                 try:
+                    last_time = self.handle_next_frame(last_time, interface)
+                    for i in range(20):
+                        continue
                     raw_input = input("Enter your guess (x,y): ").strip()
                     x_str, y_str = raw_input.split(",")
                     guess = (int(x_str), int(y_str))
@@ -105,10 +131,20 @@ class GameController:
                 guess = None
                 while guess is None:
                     guess = self.get_guess()
+                    last_time = self.handle_next_frame(last_time, interface)
                     sleep(0.2)
 
-
+            current_player = self.game.current_player()
+            interface.handle_game_status(GameStatus.processing)
             result = self.game.make_guess(guess)
+
+            match result:
+                case GuessReturn.hit:
+                    interface.hit(current_player, guess)
+                case GuessReturn.miss:
+                    interface.miss(current_player, guess)
+                case GuessReturn.dupe_guess:
+                    interface.handle_game_status(GameStatus.repeat_guess)
 
             print(f"Guess at {guess}: {result.value}")
 

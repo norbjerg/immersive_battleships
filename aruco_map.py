@@ -2,14 +2,16 @@ PLAYER1_GUESS_CONFIRM = 49
 PLAYER2_GUESS_CONFIRM = 29
 
 # Note that these are the arucos, that player x will be able to guess on
+# Note that when the player is sitting opposite, it will flip the y values, so 13 in airtable system
+# will be 0 for the player
 PLAYER1_VERTICAL_Y_COORD_TO_ARUCO_ID = {
-    30: 7,
-    31: 8,
-    32: 9,
+    30: 13,
+    31: 12,
+    32: 11,
     33: 10,
-    34: 11,
-    35: 12,
-    36: 13,
+    34: 9,
+    35: 8,
+    36: 7,
 }
 PLAYER1_HORIZONTAL_X_COORD_TO_ARUCO_ID = {
     37: 0,
@@ -53,6 +55,30 @@ PLAYER2_HORIZONTAL_X_COORD_TO_ARUCO_ID = {
 
 # NOTES
 PLAYER1_VERTICAL_NUMBER_TO_ARUCO_ID = {
+    0: 36,
+    1: 35,
+    2: 34,
+    3: 33,
+    4: 32,
+    5: 31,
+    6: 30,
+}
+PLAYER1_HORIZONTAL_LETTER_TO_ARUCO_ID = {
+    "A": 37,
+    "B": 38,
+    "C": 39,
+    "D": 40,
+    "E": 41,
+    "F": 42,
+    "G": 43,
+    "H": 44,
+    "I": 45,
+    "J": 46,
+    "K": 47,
+    "L": 48,
+}
+
+PLAYER2_VERTICAL_NUMBER_TO_ARUCO_ID = {
     0: 10,
     1: 11,
     2: 12,
@@ -61,7 +87,7 @@ PLAYER1_VERTICAL_NUMBER_TO_ARUCO_ID = {
     5: 15,
     6: 16,
 }
-PLAYER1_HORIZONTAL_LETTER_TO_ARUCO_ID = {
+PLAYER2_HORIZONTAL_LETTER_TO_ARUCO_ID = {
     "A": 17,
     "B": 18,
     "C": 19,
@@ -76,27 +102,3 @@ PLAYER1_HORIZONTAL_LETTER_TO_ARUCO_ID = {
     "L": 28,
 }
 
-
-PLAYER2_VERTICAL_NUMBER_TO_ARUCO_ID = {
-    0: 30,
-    1: 31,
-    2: 32,
-    3: 33,
-    4: 34,
-    5: 35,
-    6: 36,
-}
-PLAYER2_HORIZONTAL_LETTER_TO_ARUCO_ID = {
-    "A": 37,
-    "B": 38,
-    "C": 39,
-    "D": 40,
-    "E": 41,
-    "F": 42,
-    "G": 43,
-    "H": 44,
-    "I": 45,
-    "J": 46,
-    "K": 47,
-    "L": 48,
-}

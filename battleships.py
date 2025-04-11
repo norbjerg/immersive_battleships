@@ -1,13 +1,13 @@
+from ast import literal_eval
 from enum import Enum
 from typing import Literal
-from ast import literal_eval
 
-from shift_valves import Table
 from port import Port
+from shift_valves import Table
 
 tableActive = False
 
-if (tableActive):
+if tableActive:
     t = Table(Port)
 
 AVAILABLE_SHIPS = {
@@ -17,12 +17,14 @@ AVAILABLE_SHIPS = {
     5: 1,
 }
 
+
 class GuessReturn(Enum):
     hit = "hit"
     miss = "miss"
     dupe_guess = "dupe_guess"
     out_of_bounds = "out_of_bounds"
     finished_game = "finished_game"
+
 
 class Ship:
     """
@@ -32,29 +34,35 @@ class Ship:
 
     player signifies which player the ship belongs to
     """
+
     def __init__(self, sections: list[tuple[int, int]], player: int) -> None:
         if not sections or len(sections) <= 1:
             raise ValueError("Ship must have at least two sections")
         self.player = player
 
-        xs = [x for x,y in sections]
-        ys = [y for x,y in sections]
+        xs = [x for x, y in sections]
+        ys = [y for x, y in sections]
 
         if all(x == xs[0] for x in xs):
             sorted_ys = sorted(ys)
             expected = list(range(sorted_ys[0], sorted_ys[0] + len(sections)))
             if sorted_ys != expected:
-                raise ValueError(f"Invalid vertical ship: got {sorted_ys}, expected {expected}")
+                raise ValueError(
+                    f"Invalid vertical ship: got {sorted_ys}, expected {expected}"
+                )
         elif all(y == ys[0] for y in ys):
             sorted_xs = sorted(xs)
             expected = list(range(sorted_xs[0], sorted_xs[0] + len(sections)))
             if sorted_xs != expected:
-                raise ValueError(f"Invalid vertical ship: got {sorted_xs}, expected {expected}")
+                raise ValueError(
+                    f"Invalid vertical ship: got {sorted_xs}, expected {expected}"
+                )
         else:
             raise ValueError("Ship sections must be in a straight line")
 
         self.filled = set(sections)
         self.lives = len(self.filled)
+
 
 class Game:
     """
@@ -62,10 +70,21 @@ class Game:
 
     ships are given as a list of Ship objects
     """
+
     def __init__(self, board_size: tuple[int, int], ships: list[Ship]) -> None:
         self.width, self.height = board_size
-        self.p1_board = PlayerBoard((0,self.width//2-1),(0,self.height-1),[ship for ship in ships if ship.player == 1], 1)
-        self.p2_board = PlayerBoard((self.width//2, self.width-1),(0,self.height-1),[ship for ship in ships if ship.player == 2], 2)
+        self.p1_board = PlayerBoard(
+            (0, self.width // 2 - 1),
+            (0, self.height - 1),
+            [ship for ship in ships if ship.player == 1],
+            1,
+        )
+        self.p2_board = PlayerBoard(
+            (self.width // 2, self.width - 1),
+            (0, self.height - 1),
+            [ship for ship in ships if ship.player == 2],
+            2,
+        )
         self.alternate = self.alternator()
         self.switch_turn()
         print(self.width)
@@ -83,12 +102,14 @@ class Game:
     def switch_turn(self):
         self.current_board = next(self.alternate)
 
-    def current_player(self):
+    def current_player(self) -> Literal[1, 2]:
         match self.current_board.player_num:
             case 1:
                 return 2
             case 2:
                 return 1
+            case _:
+                raise ValueError("Not a playernum")
 
     def make_guess(self, guess: tuple[int, int]) -> GuessReturn:
         game_state = self.current_board.make_guess(guess)
@@ -104,8 +125,15 @@ class Game:
                 self.switch_turn()
                 return game_state
 
+
 class PlayerBoard:
-    def __init__(self, width: tuple[int, int], height: tuple[int, int], ships: list[Ship], player_num: int) -> None:
+    def __init__(
+        self,
+        width: tuple[int, int],
+        height: tuple[int, int],
+        ships: list[Ship],
+        player_num: int,
+    ) -> None:
         """
         ships are given as a list of Ship objects
 
@@ -127,15 +155,16 @@ class PlayerBoard:
         for ship in ships:
             for coord in ship.filled:
                 if not self.in_bounds(coord):
-                    raise ValueError(f"Ship is out of bounds on player {self.player_num} board with coord:\n {ship.filled}")
+                    raise ValueError(
+                        f"Ship is out of bounds on player {self.player_num} board with coord:\n {ship.filled}"
+                    )
                 self.board[coord] = ship  # will make references
 
     def in_bounds(self, coord: tuple[int, int]) -> bool:
         """
         Checks if the given coord is in bounds of the players board
         """
-        return (self.x[0] <= coord[0] <= self.x[1]
-            and self.y[0] <= coord[1] <= self.y[1])
+        return self.x[0] <= coord[0] <= self.x[1] and self.y[0] <= coord[1] <= self.y[1]
 
     def make_guess(self, coord: tuple[int, int]) -> GuessReturn:
         """
