@@ -2,6 +2,7 @@ import cv2
 import imutils
 import numpy as np
 from cv2 import aruco, typing
+import aruco_map
 
 BOT_LEFT_ARUCO_ID = 0
 TOP_RIGHT_ARUCO_ID = 1
@@ -312,23 +313,78 @@ class Camera:
             cv2.imwrite("DEBUG-colors.png", image)
         return color_to_centers
 
+    def get_ids_of_detected_arucos(self, img) -> list[int]:
+        aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
+            img, aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
+        )
+        if ids is None:
+            return []
+        ids = ids.reshape((ids.shape[0],))
+        return [int(id) for id in ids]
+
+    def get_guess_coords(self, img, player_num: int):
+        ids = self.get_ids_of_detected_arucos(img)
+
+        if player_num == 1:
+            x_map = aruco_map.PLAYER1_HORIZONTAL_X_COORD_TO_ARUCO_ID
+            y_map = aruco_map.PLAYER1_VERTICAL_Y_COORD_TO_ARUCO_ID
+        else:
+            x_map = aruco_map.PLAYER2_HORIZONTAL_X_COORD_TO_ARUCO_ID
+            y_map = aruco_map.PLAYER2_VERTICAL_Y_COORD_TO_ARUCO_ID
+
+        x_range = 
+
+    def detect_arucos(self, img):
+        aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
+            img, aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
+        )
+        if ids is None:
+            cv2.imshow("aruco", img)
+            return
+        ids = ids.reshape((ids.shape[0],))
+        ids_to_corners = dict(zip(ids, aruco_corners))
+
+        for id, aruco_ in ids_to_corners.items():
+            cv2.circle(
+                img, (int(aruco_[0][0][0]), int(aruco_[0][0][1])), 3, (255, 20, 20)
+            )
+            cv2.circle(
+                img, (int(aruco_[0][1][0]), int(aruco_[0][1][1])), 3, (255, 20, 20)
+            )
+            cv2.circle(
+                img, (int(aruco_[0][2][0]), int(aruco_[0][2][1])), 3, (255, 20, 20)
+            )
+            cv2.circle(
+                img, (int(aruco_[0][3][0]), int(aruco_[0][3][1])), 3, (255, 20, 20)
+            )
+            cv2.putText(
+                img,
+                str(id),
+                (int(aruco_[0][0][0]), int(aruco_[0][0][1])),
+                3,
+                3,
+                (255, 20, 20),
+            )
+        cv2.imshow("aruco", img)
+
 
 cam = Camera()
+print(cam.get_ids_of_detected_arucos(cv2.imread("DEBUG-image.png")))
 # print(cam.otsu_thresh(cv2.imread("images/board_w_green.png")))
 # print(cam.otsu_thresh(cam.get_image()))
 
 # i = 0
 
-while True:
-    print(cam.otsu_thresh(cv2.imread("images/board_w_magenta.png"), show_img=False))
-    break
-    img = cam.get_image()
-    cam.otsu_thresh(img.copy(), show_img=True)
-    k = cv2.waitKey(5)
-    if k == 27:
-        break
-    if k == ord("d"):
-        cv2.imwrite("DEBUG-raw.png", img)
+# while True:
+#     print(cam.otsu_thresh(cv2.imread("images/board_w_magenta.png"), show_img=False))
+#     break
+#     img = cam.get_image()
+#     cam.otsu_thresh(img.copy(), show_img=True)
+#     k = cv2.waitKey(5)
+#     if k == 27:
+#         break
+#     if k == ord("d"):
+#         cv2.imwrite("DEBUG-raw.png", img)
 
 # i = 0
 # while True:
