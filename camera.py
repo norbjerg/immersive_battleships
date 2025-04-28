@@ -33,7 +33,7 @@ def img_show(img, title="lol"):
 
 class Camera:
     def __init__(self):
-        self.cam = cv2.VideoCapture(1)
+        self.cam = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
     def get_image(self) -> np.ndarray:
         result, image = self.cam.read()
@@ -342,17 +342,17 @@ class Camera:
         id1_corners.sort(key=lambda c: c[0])
         bottom_left_corner_id1 = id1_corners[0]
         
-        origin = (int(bottom_left_corner_id1[0]-7.5*px_per_mm), int(bottom_left_corner_id1[1]+7.5*px_per_mm))
+        origin = (int(bottom_left_corner_id1[0]-10*px_per_mm), int(bottom_left_corner_id1[1]+10*px_per_mm))
         cv2.circle(image,origin,5,(20,20,255))
 
         for i in range(BOARD_X_MAX+1):
             for j in range(BOARD_Y_MAX+1):
                 if i+j==0:
                     continue
-                cv2.circle(image,(origin[0]-22*i,origin[1]+22*j),5,(20,20,255))
+                cv2.circle(image,(origin[0]-24*i,origin[1]+24*j),5,(20,20,255))
                 
 
-        img_show(image)
+        cv2.imshow("centers", image)
 
 cam = Camera()
 # print(cam.otsu_thresh(cv2.imread("images/board_w_green.png")))
