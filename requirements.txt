@@ -3,6 +3,6 @@ pyserial
 cobs
 bitarray
 opencv-python
-opencv-contrib-python
+opencv-contrib-python==4.11.0.86
 imutils
 pyglet
