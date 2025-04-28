@@ -318,7 +318,8 @@ class Camera:
 
     def detect_holes_from_aruco(self, image, show_img: bool = True):
         ids_to_corners = self.get_ids_to_corners_aruco(image, show_img)
-
+        if not ids_to_corners:
+            return
         pixel_side_len = 0
 
         for corners in ids_to_corners.values():
@@ -357,8 +358,16 @@ cam = Camera()
 # print(cam.otsu_thresh(cv2.imread("images/board_w_green.png")))
 # print(cam.otsu_thresh(cam.get_image()))
 
-cam.detect_holes_from_aruco(cv2.imread("images/board_clear2.png"))
+# cam.detect_holes_from_aruco(cv2.imread("images/board_clear2.png"))
 
+while True:
+    img = cam.get_image()
+    cam.detect_holes_from_aruco(img.copy(), show_img=True)
+    k = cv2.waitKey(5)
+    if k == 27:
+        break
+    if k == ord("d"):
+        cv2.imwrite("DEBUG-raw.png", img)
 # while True:
 #     print(cam.otsu_thresh(cv2.imread("images/board_w_magenta.png"), show_img=False))
 #     break
