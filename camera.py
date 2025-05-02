@@ -6,6 +6,8 @@ from cv2 import aruco, typing
 BOT_LEFT_ARUCO_ID = 0
 TOP_RIGHT_ARUCO_ID = 1
 CORNER_ARUCO_SIZE_MM = 45
+CORNER_ORIGIN_DISTANCE_MM = 10
+HOLE_DISTANCE_MM = 24
 BOARD_X_MIN = 0
 BOARD_Y_MIN = 0
 BOARD_X_MAX = 13
@@ -317,6 +319,12 @@ class Camera:
         return ids_to_corners
 
     def detect_holes_from_aruco(self, image, show_img: bool = True):
+        """
+        Detect holes from corner arucos.
+
+        Returns a dict with board coordinates as keys and image coords as value
+        """
+
         ids_to_corners = self.get_ids_to_corners_aruco(image, show_img)
         if not ids_to_corners:
             return
@@ -341,18 +349,41 @@ class Camera:
         id1_corners = id1_corners[:2]
         id1_corners.sort(key=lambda c: c[0])
         bottom_left_corner_id1 = id1_corners[0]
-        
-        origin = (int(bottom_left_corner_id1[0]-10*px_per_mm), int(bottom_left_corner_id1[1]+10*px_per_mm))
-        cv2.circle(image,origin,5,(20,20,255))
 
-        for i in range(BOARD_X_MAX+1):
-            for j in range(BOARD_Y_MAX+1):
-                if i+j==0:
+        origin = (
+            int(bottom_left_corner_id1[0] - CORNER_ORIGIN_DISTANCE_MM * px_per_mm),
+            int(bottom_left_corner_id1[1] + CORNER_ORIGIN_DISTANCE_MM * px_per_mm),
+        )
+
+        board_coord_to_hole = {
+            (x, y): (origin[0] - HOLE_DISTANCE_MM * x, origin[1] + HOLE_DISTANCE_MM * y)
+            for x in range(BOARD_X_MAX + 1)
+            for y in range(BOARD_Y_MAX + 1)
+        }
+
+        if show_img is False:
+            return board_coord_to_hole, px_per_mm
+
+        cv2.circle(image, origin, 5, (20, 20, 255))
+
+        for x in range(BOARD_X_MAX + 1):
+            for y in range(BOARD_Y_MAX + 1):
+                if x + y == 0:
                     continue
-                cv2.circle(image,(origin[0]-24*i,origin[1]+24*j),5,(20,20,255))
-                
+                cv2.circle(
+                    image,
+                    (
+                        origin[0] - HOLE_DISTANCE_MM * x,
+                        origin[1] + HOLE_DISTANCE_MM * y,
+                    ),
+                    5,
+                    (20, 20, 255),
+                )
 
         cv2.imshow("centers", image)
+
+        return board_coord_to_hole, px_per_mm
+
 
 cam = Camera()
 # print(cam.otsu_thresh(cv2.imread("images/board_w_green.png")))
@@ -360,14 +391,21 @@ cam = Camera()
 
 # cam.detect_holes_from_aruco(cv2.imread("images/board_clear2.png"))
 
+col = False
 while True:
     img = cam.get_image()
-    cam.detect_holes_from_aruco(img.copy(), show_img=True)
+    if col:
+        cam.detect_colors(cam.get_image())
+    else:
+        cam.detect_holes_from_aruco(img.copy(), show_img=True)
     k = cv2.waitKey(5)
     if k == 27:
         break
+    if k == ord("s"):
+        col = not col
     if k == ord("d"):
         cv2.imwrite("DEBUG-raw.png", img)
+
 # while True:
 #     print(cam.otsu_thresh(cv2.imread("images/board_w_magenta.png"), show_img=False))
 #     break
@@ -381,7 +419,7 @@ while True:
 
 # i = 0
 # while True:
-#     l = cam.detect_colors(cv2.imread("./images/2_smaller_greens.jpg"))
+#     l = cam.detect_colors(cam.get_image())
 #     if i == 0:
 #         print(l)
 #         i += 1
