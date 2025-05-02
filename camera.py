@@ -6,6 +6,25 @@ from cv2 import aruco, typing
 BOT_LEFT_ARUCO_ID = 0
 TOP_RIGHT_ARUCO_ID = 1
 CORNER_ARUCO_SIZE_MM = 45
+BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM = (
+    347  # Note that these are the bottom left corner of the markers
+)
+BOTTOM_ARUCO_TO_TOP_VERTICAL_MM = 279  # and top right corner respectively
+REAL_ARUCO_CORNERS = np.array(
+    [
+        # bottom left
+        [0, 0],
+        [0, CORNER_ARUCO_SIZE_MM],
+        [CORNER_ARUCO_SIZE_MM, 0],
+        [CORNER_ARUCO_SIZE_MM, CORNER_ARUCO_SIZE_MM],
+        # top right
+        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM],
+        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM-CORNER_ARUCO_SIZE_MM],
+        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM - CORNER_ARUCO_SIZE_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM-CORNER_ARUCO_SIZE_MM],
+        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM - CORNER_ARUCO_SIZE_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM-CORNER_ARUCO_SIZE_MM-CORNER_ARUCO_SIZE_MM],
+    ],
+    dtype=np.float32
+).copy(order="C")
 CORNER_ORIGIN_DISTANCE_MM = 10
 HOLE_DISTANCE_MM = 24
 BOARD_X_MIN = 0
@@ -223,7 +242,7 @@ class Camera:
     def detect_colors(self, img, show_img: bool = True):
         """
         Detect colors (blue, green, magenta, red) from given image.
-        
+
         Returns the name of the color to a list of centers of the colors in image coordinates.
         """
 
@@ -259,7 +278,7 @@ class Camera:
         )
 
         color_to_centers: dict[str, list[tuple[int, int]]] = {}
-        image = img.copy()
+        image = img
         for clr, contours in zip(
             ("blue", "green", "magenta", "red"),
             (cnts_blue, cnts_green, cnts_magenta, cnts_red),
@@ -273,7 +292,7 @@ class Camera:
                     color_to_centers.setdefault(clr, [])
                     color_to_centers[clr].append((cX, cY))
                     cv2.drawContours(image, [cnt], -1, COLOR_TO_BGR[clr], 3)
-                    cv2.circle(image, (cX, cY), 7, (255, 255, 255), -1)
+                    cv2.circle(image, (cX, cY), 2, (255, 255, 255), -1)
                     cv2.putText(
                         image,
                         clr[0],
@@ -313,16 +332,29 @@ class Camera:
                 return {}
         return ids_to_corners
 
-    def detect_holes_from_aruco(self, image, show_img: bool = True):
+    def detect_holes_from_aruco(self, image: typing.MatLike, show_img: bool = True):
         """
         Detect holes from corner arucos.
 
         Returns a dict with board coordinates as keys and image coords as value
         """
 
-        ids_to_corners = self.get_ids_to_corners_aruco(image, show_img)
+        ids_to_corners: dict[int, typing.MatLike] = self.get_ids_to_corners_aruco(image, show_img)
         if not ids_to_corners:
             return
+
+        if TOP_RIGHT_ARUCO_ID not in ids_to_corners and BOT_LEFT_ARUCO_ID not in ids_to_corners:
+            return None
+        print(REAL_ARUCO_CORNERS)
+        corners = [corners for id, corners in ids_to_corners.items() if id in {TOP_RIGHT_ARUCO_ID, BOT_LEFT_ARUCO_ID}]
+        aruco_corners = np.concatenate([corners[i][0] for i in range(len(corners))], axis=0).astype(np.float32).copy(order="C")
+        print(aruco_corners)
+        h, _ = cv2.findHomography(aruco_corners, REAL_ARUCO_CORNERS)
+        warped = cv2.warpPerspective(image, h, image.shape[:2])
+
+        cv2.imshow("l", warped)
+        cv2.waitKey(0)
+
         pixel_side_len = 0
 
         for corners in ids_to_corners.values():
@@ -338,8 +370,7 @@ class Camera:
 
         mm_per_px = CORNER_ARUCO_SIZE_MM / pixel_side_len
         px_per_mm = pixel_side_len / CORNER_ARUCO_SIZE_MM
-        if TOP_RIGHT_ARUCO_ID not in ids_to_corners:
-            return None
+
         id1_corners: list[list[int]] = list(ids_to_corners[TOP_RIGHT_ARUCO_ID][0])
         id1_corners.sort(key=lambda c: c[1], reverse=True)
         id1_corners = id1_corners[:2]
@@ -387,7 +418,6 @@ class Camera:
         if ids is None:
             return []
         ids = ids.reshape((ids.shape[0],))
-        print(ids)
         return [int(id) for id in ids]
 
     def detect_arucos(self, img):
@@ -400,17 +430,43 @@ class Camera:
         ids = ids.reshape((ids.shape[0],))
         ids_to_corners = dict(zip(ids, aruco_corners))
 
+        for id, aruco_ in ids_to_corners.items():
+            cv2.circle(
+                img, (int(aruco_[0][0][0]), int(aruco_[0][0][1])), 3, (255, 20, 20)
+            )
+            cv2.circle(
+                img, (int(aruco_[0][1][0]), int(aruco_[0][1][1])), 3, (255, 20, 20)
+            )
+            cv2.circle(
+                img, (int(aruco_[0][2][0]), int(aruco_[0][2][1])), 3, (255, 20, 20)
+            )
+            cv2.circle(
+                img, (int(aruco_[0][3][0]), int(aruco_[0][3][1])), 3, (255, 20, 20)
+            )
+            cv2.putText(
+                img,
+                str(id),
+                (int(aruco_[0][0][0]), int(aruco_[0][0][1])),
+                3,
+                3,
+                (255, 20, 20),
+            )
+        cv2.imshow("aruco", img)
 
 
 if __name__ == "__main__":
-    cam = Camera(1)
+    cam = Camera(0)
     col = False
     while True:
-        img = cam.get_image()
-        if col:
-            cam.detect_colors(cam.get_image())
-        else:
-            cam.detect_holes_from_aruco(img.copy(), show_img=True)
+        # img = cam.get_image()
+        img = cv2.imread("DEBUG-skew.png")
+        if not col:
+            col_img = img.copy()
+            colors = cam.detect_colors(col_img, show_img=False)
+            holes = cam.detect_holes_from_aruco(col_img, show_img=True)
+
+        elif col:
+            cam.detect_arucos(img.copy())
         k = cv2.waitKey(5)
         if k == 27:
             break

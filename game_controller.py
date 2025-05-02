@@ -115,11 +115,12 @@ class GameController:
         return ships
 
     def get_guess(
-        self, img: cv2.typing.MatLike | None = None
+        self, img: cv2.typing.MatLike | None = None, player_num: int | None = None
     ) -> tuple[int, int] | None:
         img = img if img is not None else self.camera.get_image()
         ids = self.camera.get_ids_of_detected_arucos(img)
-        player_num = self.game.current_player()
+        if not player_num:
+            player_num = self.game.current_player()
 
         if player_num == 1:
             x_map = aruco_map.PLAYER1_HORIZONTAL_X_COORD_TO_ARUCO_ID
@@ -132,8 +133,8 @@ class GameController:
         if confirm not in ids:
             return None
 
-        x_range = range(min(x_map), max(x_map))
-        y_range = range(min(y_map), max(y_map))
+        x_range = range(min(x_map), max(x_map) + 1)
+        y_range = range(min(y_map), max(y_map) + 1)
 
         xs = [id for id in ids if id in x_range]
         ys = [id for id in ids if id in y_range]
@@ -149,7 +150,7 @@ class GameController:
             print("KeyError: xs0", xs[0], "ys0", ys[0])
             return None
 
-        return x_map[xs[0]], y_map[ys[0]]
+        return y_map[ys[0]], x_map[xs[0]]
 
     def handle_next_frame(self, last_time: float, interface: Interface):
         if interface.key_handler[pyglet.window.key.ESCAPE]:
@@ -173,6 +174,8 @@ class GameController:
             interface.handle_game_status(GameStatus.await_ship_confirmation)
             last_time = self.handle_next_frame(last_time, interface)
             sleep(0.2)
+
+        print([ship.filled for ship in self.ships])
 
         while True:
             print(f"Player {self.game.current_player()}'s turn")
@@ -220,3 +223,17 @@ class GameController:
                 print(f"Game Over! Player {self.game.current_player()} wins! ")
                 break
             print(result)
+
+
+if __name__ == "__main__":
+    c = GameController(Camera(0), True)
+    while True:
+        img = c.camera.get_image()
+        c.camera.detect_arucos(img.copy())
+        g = c.get_guess(img, 1)
+        if g:
+            print(g)
+
+        k = cv2.waitKey(5)
+        if k == 27:
+            break
