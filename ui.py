@@ -3,10 +3,11 @@ from enum import Enum, auto
 from random import randint
 
 import pyglet
-from pyglet import shapes, text, image, sprite
+from pyglet import image, shapes, sprite, text
 
 
 class GameStatus(Enum):
+    await_ship_confirmation = auto()
     await_player1_guess = auto()
     await_player2_guess = auto()
     repeat_guess = auto()
@@ -23,7 +24,11 @@ class GameStatus(Enum):
 
 class InterfaceBoard:
     def __init__(
-        self, corner: tuple[int, int], size: tuple[int, int], dim: tuple[int, int], player_num: int
+        self,
+        corner: tuple[int, int],
+        size: tuple[int, int],
+        dim: tuple[int, int],
+        player_num: int,
     ) -> None:
         x_size, y_size = size
         width, height = dim
@@ -77,7 +82,13 @@ class InterfaceBoard:
             for y in range(y_size)
         }
 
-        self.player_num = text.Label(str(player_num), corner[0] + width // 2, 100, color=(255,255,255,255), font_size=40)
+        self.player_num = text.Label(
+            str(player_num),
+            corner[0] + width // 2,
+            100,
+            color=(255, 255, 255, 255),
+            font_size=40,
+        )
 
         self.misses: list[shapes.ShapeBase] = []
         self.hits: list[text.DocumentLabel] = []
@@ -147,7 +158,7 @@ class Interface(pyglet.window.Window):
             ),
             (x_size, y_size),
             (width, height),
-            1
+            1,
         )
 
         self.board2 = InterfaceBoard(
@@ -157,12 +168,18 @@ class Interface(pyglet.window.Window):
             ),
             (x_size, y_size),
             (width, height),
-            2
+            2,
         )
-        print(self.width)
 
         self.status_text: text.DocumentLabel = text.Label(
-            "", self.width // 2 - 100, 100, width=100, height=100, color=(220, 0, 0, 255), align="center"
+            "",
+            self.width // 2 - 500,
+            100,
+            width=1000,
+            height=100,
+            color=(220, 0, 0, 255),
+            align="center",
+            multiline=True,
         )
 
     def next_frame(self):
@@ -177,15 +194,15 @@ class Interface(pyglet.window.Window):
         # coordinates are flipped because for the player it is flipped to the airtable
         # when making guess on board2, we need to offset it, because given are full airtable coords
         if player_num == 1:
-            self.board2.hit((coord[1],coord[0]-7))
+            self.board2.hit((coord[1], coord[0] - 7))
         else:
-            self.board1.hit((coord[1],coord[0]))
+            self.board1.hit((coord[1], coord[0]))
 
     def miss(self, player_num: int, coord: tuple[int, int]):
         if player_num == 1:
-            self.board2.miss((coord[1],coord[0]-7))
+            self.board2.miss((coord[1], coord[0] - 7))
         else:
-            self.board1.miss((coord[1],coord[0]))
+            self.board1.miss((coord[1], coord[0]))
 
     def handle_game_status(self, status: GameStatus):
         match status:
@@ -199,6 +216,11 @@ class Interface(pyglet.window.Window):
                 self.status_text.text = "A ship has been sunk"
             case GameStatus.processing:
                 self.status_text.text = "Processing..."
+            case GameStatus.await_ship_confirmation:
+                self.status_text.text = (
+                    "Awaiting for players to be ready.\n"
+                    "Both players must hold down fire button when ready."
+                )
 
 
 if __name__ == "__main__":

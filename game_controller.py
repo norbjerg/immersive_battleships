@@ -1,53 +1,116 @@
 import time
+from math import inf
 from time import sleep
 
 import cv2
 import pyglet
 
 import aruco_map
+import helper_funcs
 from battleships import Game, GuessReturn, Ship
 from camera import Camera
 from ui import GameStatus, Interface
+
+SHIP_SIZE_MM = 15
+
+COORD = tuple[int, int]
 
 
 class GameController:
     def __init__(self, camera: Camera, dev: bool):
         self.camera = camera
-        self.board_size = (14, 12)  # Get board size from camera here
-        self.ships: list[Ship] = self.get_ships()  # Get ships from the camera her
-        self.game = Game(board_size=self.board_size, ships=self.ships)
+        self.board_size = (14, 12)
+        self.ships: list[Ship] | None = None
+        self.game = None
         self.dev = dev
 
-    def get_ships(self) -> list[Ship]:
+    def reset(self):
+        self.ships = None
+        self.game = None
+
+    def try_initialize(self):
+        detected_arucos = self.camera.get_ids_of_detected_arucos(
+            self.camera.get_image()
+        )
+        if (
+            aruco_map.PLAYER1_GUESS_CONFIRM not in detected_arucos
+            and aruco_map.PLAYER2_GUESS_CONFIRM not in detected_arucos
+        ):
+            return
+        self.ships = self.get_ships()
+        if self.ships is None:
+            return
+        self.game = Game(board_size=self.board_size, ships=self.ships)
+
+    def get_ships(self) -> list[Ship] | None:
         """
         Converts raw ship data from the camera into Ship objects.
         Each ship is a list of coordinates.
         """
-        camera_ships = [
-            [(0, 0), (0, 1), (0, 2)],
-            [(13, 0), (12, 0), (11, 0)],
-        ]  # self.camera.read_ships() #Read ships from camera here
-        ships: list[Ship] = []
 
-        for sections in camera_ships:
-            if not sections:
-                continue
+        img = self.camera.get_image()
+        detect_holes = self.camera.detect_holes_from_aruco(img, show_img=False)
+        if detect_holes is None:
+            return None
+        board_coord_to_hole, px_per_mm = detect_holes
+        color_to_coords = self.camera.detect_colors(img, show_img=False)
 
-            # Determine player by position on board. Unsure if we should check x or y here.
-            left_half = all(x < self.board_size[0] // 2 for x, _ in sections)
-            right_half = all(x >= self.board_size[0] // 2 for x, _ in sections)
+        color_coord_to_hole_closest_distance: dict[COORD, tuple[COORD, float]] = {}
 
-            if not (left_half or right_half):
-                print(f"Skipping ship crossing center line: {sections}")
-                continue  # Invalid: ship crosses boundary
+        color_coord_to_color = {
+            coord: color
+            for color, coords in color_to_coords.items()
+            for coord in coords
+        }
 
-            player = 1 if left_half else 2
+        for color_coord in color_coord_to_color:
+            for board_coord, hole_coord in board_coord_to_hole.items():
+                color_coord_to_hole_closest_distance.setdefault(
+                    color_coord, ((0, 0), inf)
+                )
+                dist = helper_funcs.eucl_dist(color_coord, hole_coord)
+                _, current_min = color_coord_to_hole_closest_distance[color_coord]
+                if dist < current_min:
+                    color_coord_to_hole_closest_distance[color_coord] = (
+                        board_coord,
+                        dist,
+                    )
+
+        color_to_board_coords = {}
+        for color_coord, (
+            board_coord,
+            _,
+        ) in color_coord_to_hole_closest_distance.items():
+            color = color_coord_to_color[color_coord]
+            color_to_board_coords.setdefault(color, [])
+            color_to_board_coords[color].append(board_coord)
+
+        ships = []
+
+        coords = [
+            coord for coords in color_to_board_coords.values() for coord in coords
+        ]
+        if len(set(coords)) != len(coords):
+            print("Duplicate ship coords found", next(coord for coord in coords if coords.count(coord) > 1))
+            return None
+
+        for board_coords in color_to_board_coords.values():
             try:
-                ship = Ship(sections, player)
-                ships.append(ship)
+                left, right = helper_funcs.split_coords(
+                    self.board_size[0], board_coords
+                )
             except ValueError as e:
-                print(f"Skipping invalid ship: {e}")
-                print(f"Found at: {sections}")
+                print(f"Invalid ship formation: {e}")
+                return None
+
+            for side in (left, right):
+                try:
+                    ship = Ship(*side)
+                    ships.append(ship)
+                except ValueError as e:
+                    print(f"Skipping invalid ship: {e}")
+                    print(f"Found at: {side}")
+                    return None
 
         return ships
 
@@ -105,6 +168,12 @@ class GameController:
         interface = Interface()
         last_time = time.perf_counter()
 
+        while self.game is None:
+            self.try_initialize()
+            interface.handle_game_status(GameStatus.await_ship_confirmation)
+            last_time = self.handle_next_frame(last_time, interface)
+            sleep(0.2)
+
         while True:
             print(f"Player {self.game.current_player()}'s turn")
             interface.handle_game_status(
@@ -126,7 +195,6 @@ class GameController:
                     if not guess:
                         continue
             if not self.dev:
-                print("Not in dev mode")
                 # Get guess from camera here
                 guess = None
                 while guess is None:

@@ -3,7 +3,7 @@ from game_controller import GameController
 import argparse
 
 def main(dev_mode=False):
-    camera = Camera(0) # Set camera number matching webcam
+    camera = Camera(1) # Set camera number matching webcam
     game_controller = GameController(camera, dev_mode)
     game_controller.run()
 

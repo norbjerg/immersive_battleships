@@ -5,39 +5,15 @@ PLAYER2_GUESS_CONFIRM = 29
 # Note that when the player is sitting opposite, it will flip the y values, so 13 in airtable system
 # will be 0 for the player
 PLAYER1_VERTICAL_Y_COORD_TO_ARUCO_ID = {
-    30: 13,
-    31: 12,
-    32: 11,
-    33: 10,
-    34: 9,
-    35: 8,
-    36: 7,
+    10: 13,
+    11: 12,
+    12: 11,
+    13: 10,
+    14: 9,
+    15: 8,
+    16: 7,
 }
 PLAYER1_HORIZONTAL_X_COORD_TO_ARUCO_ID = {
-    37: 0,
-    38: 1,
-    39: 2,
-    40: 3,
-    41: 4,
-    42: 5,
-    43: 6,
-    44: 7,
-    45: 8,
-    46: 9,
-    47: 10,
-    48: 11,
-}
-
-PLAYER2_VERTICAL_Y_COORD_TO_ARUCO_ID = {
-    10: 0,
-    11: 1,
-    12: 2,
-    13: 3,
-    14: 4,
-    15: 5,
-    16: 6,
-}
-PLAYER2_HORIZONTAL_X_COORD_TO_ARUCO_ID = {
     17: 0,
     18: 1,
     19: 2,
@@ -50,6 +26,30 @@ PLAYER2_HORIZONTAL_X_COORD_TO_ARUCO_ID = {
     26: 9,
     27: 10,
     28: 11,
+}
+
+PLAYER2_VERTICAL_Y_COORD_TO_ARUCO_ID = {
+    30: 0,
+    31: 1,
+    32: 2,
+    33: 3,
+    34: 4,
+    35: 5,
+    36: 6,
+}
+PLAYER2_HORIZONTAL_X_COORD_TO_ARUCO_ID = {
+    37: 0,
+    38: 1,
+    39: 2,
+    40: 3,
+    41: 4,
+    42: 5,
+    43: 6,
+    44: 7,
+    45: 8,
+    46: 9,
+    47: 10,
+    48: 11,
 }
 
 
@@ -101,4 +101,3 @@ PLAYER2_HORIZONTAL_LETTER_TO_ARUCO_ID = {
     "K": 27,
     "L": 28,
 }
-
