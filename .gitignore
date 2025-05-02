@@ -4,6 +4,7 @@
 *.png
 !images/*.png
 !Board_w_aruco.png
+!DEBUG-skew.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
