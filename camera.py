@@ -34,8 +34,8 @@ def img_show(img, title="lol"):
 
 
 class Camera:
-    def __init__(self):
-        self.cam = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+    def __init__(self, cam_num: int):
+        self.cam = cv2.VideoCapture(cam_num, cv2.CAP_DSHOW)
 
     def get_image(self) -> np.ndarray:
         result, image = self.cam.read()
@@ -221,8 +221,14 @@ class Camera:
         return ship_len_to_board_coords
 
     def detect_colors(self, img, show_img: bool = True):
+        """
+        Detect colors (blue, green, magenta, red) from given image.
+        
+        Returns the name of the color to a list of centers of the colors in image coordinates.
+        """
+
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        lower_blue = np.array([100, 100, 50])
+        lower_blue = np.array([100, 90, 50])
         upper_blue = np.array([130, 255, 255])
         blue_mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
@@ -230,27 +236,23 @@ class Camera:
             cv2.findContours(blue_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
-        lower_green = np.array([55, 100, 50])
+        lower_green = np.array([35, 90, 50])
         upper_green = np.array([85, 255, 255])
         green_mask = cv2.inRange(hsv, lower_green, upper_green)
         cnts_green = imutils.grab_contours(
             cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
-        lower_magenta = np.array([140, 100, 50])
-        upper_magenta = np.array([170, 255, 255])
+        lower_magenta = np.array([135, 90, 50])
+        upper_magenta = np.array([175, 255, 255])
         magenta_mask = cv2.inRange(hsv, lower_magenta, upper_magenta)
         cnts_magenta = imutils.grab_contours(
             cv2.findContours(magenta_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
-        lower_red1 = np.array([0, 100, 100])
+        lower_red1 = np.array([0, 90, 100])
         upper_red1 = np.array([10, 255, 255])
-        lower_red2 = np.array([175, 100, 100])
-        upper_red2 = np.array([179, 255, 255])
-        red_mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
-        red_mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
-        red_mask = red_mask1 | red_mask2
+        red_mask = cv2.inRange(hsv, lower_red1, upper_red1)
 
         cnts_red = imutils.grab_contours(
             cv2.findContours(red_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -309,13 +311,6 @@ class Camera:
             if show_img:
                 cv2.imshow("centers", image)
                 return {}
-            print(
-                "Arucos for corners:",
-                BOT_LEFT_ARUCO_ID,
-                TOP_RIGHT_ARUCO_ID,
-                "were not found",
-            )
-            exit()
         return ids_to_corners
 
     def detect_holes_from_aruco(self, image, show_img: bool = True):
@@ -343,7 +338,8 @@ class Camera:
 
         mm_per_px = CORNER_ARUCO_SIZE_MM / pixel_side_len
         px_per_mm = pixel_side_len / CORNER_ARUCO_SIZE_MM
-
+        if TOP_RIGHT_ARUCO_ID not in ids_to_corners:
+            return None
         id1_corners: list[list[int]] = list(ids_to_corners[TOP_RIGHT_ARUCO_ID][0])
         id1_corners.sort(key=lambda c: c[1], reverse=True)
         id1_corners = id1_corners[:2]
@@ -384,47 +380,41 @@ class Camera:
 
         return board_coord_to_hole, px_per_mm
 
+    def get_ids_of_detected_arucos(self, img) -> list[int]:
+        aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
+            img, aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
+        )
+        if ids is None:
+            return []
+        ids = ids.reshape((ids.shape[0],))
+        print(ids)
+        return [int(id) for id in ids]
 
-cam = Camera()
-# print(cam.otsu_thresh(cv2.imread("images/board_w_green.png")))
-# print(cam.otsu_thresh(cam.get_image()))
+    def detect_arucos(self, img):
+        aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
+            img, aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
+        )
+        if ids is None:
+            cv2.imshow("aruco", img)
+            return
+        ids = ids.reshape((ids.shape[0],))
+        ids_to_corners = dict(zip(ids, aruco_corners))
 
-# cam.detect_holes_from_aruco(cv2.imread("images/board_clear2.png"))
 
-col = False
-while True:
-    img = cam.get_image()
-    if col:
-        cam.detect_colors(cam.get_image())
-    else:
-        cam.detect_holes_from_aruco(img.copy(), show_img=True)
-    k = cv2.waitKey(5)
-    if k == 27:
-        break
-    if k == ord("s"):
-        col = not col
-    if k == ord("d"):
-        cv2.imwrite("DEBUG-raw.png", img)
 
-# while True:
-#     print(cam.otsu_thresh(cv2.imread("images/board_w_magenta.png"), show_img=False))
-#     break
-#     img = cam.get_image()
-#     cam.otsu_thresh(img.copy(), show_img=True)
-#     k = cv2.waitKey(5)
-#     if k == 27:
-#         break
-#     if k == ord("d"):
-#         cv2.imwrite("DEBUG-raw.png", img)
-
-# i = 0
-# while True:
-#     l = cam.detect_colors(cam.get_image())
-#     if i == 0:
-#         print(l)
-#         i += 1
-#     # cam.detect_colors(cam.get_image())
-
-#     k = cv2.waitKey(5)
-#     if k == 27:
-#         break
+if __name__ == "__main__":
+    cam = Camera(1)
+    col = False
+    while True:
+        img = cam.get_image()
+        if col:
+            cam.detect_colors(cam.get_image())
+        else:
+            cam.detect_holes_from_aruco(img.copy(), show_img=True)
+        k = cv2.waitKey(5)
+        if k == 27:
+            break
+        if k == ord("s"):
+            col = not col
+        if k == ord("d"):
+            cv2.imwrite("DEBUG-raw.png", img)
