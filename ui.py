@@ -44,7 +44,7 @@ class InterfaceBoard:
                 board_corner_y + 20,
                 color=(0, 0, 0, 255),
             )
-            for idx, x in enumerate("ABCDEFGHIJKL")
+            for idx, x in enumerate(range(12))
         ]
         self.xnumbers.append(
             text.Label(
