@@ -10,18 +10,19 @@ BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM = (
     347  # Note that these are the bottom left corner of the markers
 )
 BOTTOM_ARUCO_TO_TOP_VERTICAL_MM = 279  # and top right corner respectively
+OFFSET = 60
 REAL_ARUCO_CORNERS = np.array(
     [
-        # bottom left
-        [0, CORNER_ARUCO_SIZE_MM],  # topleft
-        [CORNER_ARUCO_SIZE_MM, CORNER_ARUCO_SIZE_MM],  # topright
-        [CORNER_ARUCO_SIZE_MM, 0],  # botright
-        [0, 0],  # botleft
-        # top right
-        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM - CORNER_ARUCO_SIZE_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM],  # topleft
-        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM],  # topright
-        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM - CORNER_ARUCO_SIZE_MM],  # botright
-        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM - CORNER_ARUCO_SIZE_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM],  # botleft
+        # bottom left aruco
+        [0 + OFFSET, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM - CORNER_ARUCO_SIZE_MM + OFFSET],  # topleft
+        [CORNER_ARUCO_SIZE_MM + OFFSET, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM - CORNER_ARUCO_SIZE_MM + OFFSET],  # topright
+        [CORNER_ARUCO_SIZE_MM + OFFSET, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM + OFFSET],  # botright
+        [0 + OFFSET, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM + OFFSET],  # botleft
+        # top right aruco
+        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM - CORNER_ARUCO_SIZE_MM + OFFSET, 0 + OFFSET],  # topleft
+        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM + OFFSET, 0 + OFFSET],  # topright
+        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM + OFFSET, CORNER_ARUCO_SIZE_MM + OFFSET],  # botright
+        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM - CORNER_ARUCO_SIZE_MM + OFFSET, CORNER_ARUCO_SIZE_MM + OFFSET],  # botleft
     ],
     dtype=np.float32
 )
@@ -346,7 +347,9 @@ class Camera:
         if TOP_RIGHT_ARUCO_ID not in ids_to_corners and BOT_LEFT_ARUCO_ID not in ids_to_corners:
             return None
         print(REAL_ARUCO_CORNERS)
-        corners = [corners for id, corners in ids_to_corners.items() if id in {TOP_RIGHT_ARUCO_ID, BOT_LEFT_ARUCO_ID}]
+        corners_bot_left = [corners for id, corners in ids_to_corners.items() if id in {BOT_LEFT_ARUCO_ID}]
+        corners_top_right = [corners for id, corners in ids_to_corners.items() if id in {TOP_RIGHT_ARUCO_ID}]
+        corners = corners_bot_left + corners_top_right
         aruco_corners = np.concatenate([corners[i][0] for i in range(len(corners))], axis=0).astype(np.float32)
         print(aruco_corners)
         h, _ = cv2.findHomography(aruco_corners, REAL_ARUCO_CORNERS)
@@ -463,8 +466,8 @@ if __name__ == "__main__":
         img = cv2.imread("DEBUG-skew.png")
         if not col:
             col_img = img.copy()
-            colors = cam.detect_colors(col_img, show_img=False)
             holes = cam.detect_holes_from_aruco(col_img, show_img=True)
+            colors = cam.detect_colors(col_img, show_img=False)
 
         elif col:
             cam.detect_arucos(img.copy())
