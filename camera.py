@@ -13,18 +13,18 @@ BOTTOM_ARUCO_TO_TOP_VERTICAL_MM = 279  # and top right corner respectively
 REAL_ARUCO_CORNERS = np.array(
     [
         # bottom left
-        [0, 0],
-        [0, CORNER_ARUCO_SIZE_MM],
-        [CORNER_ARUCO_SIZE_MM, 0],
-        [CORNER_ARUCO_SIZE_MM, CORNER_ARUCO_SIZE_MM],
+        [0, CORNER_ARUCO_SIZE_MM],  # topleft
+        [CORNER_ARUCO_SIZE_MM, CORNER_ARUCO_SIZE_MM],  # topright
+        [CORNER_ARUCO_SIZE_MM, 0],  # botright
+        [0, 0],  # botleft
         # top right
-        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM],
-        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM-CORNER_ARUCO_SIZE_MM],
-        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM - CORNER_ARUCO_SIZE_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM-CORNER_ARUCO_SIZE_MM],
-        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM - CORNER_ARUCO_SIZE_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM-CORNER_ARUCO_SIZE_MM-CORNER_ARUCO_SIZE_MM],
+        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM - CORNER_ARUCO_SIZE_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM],  # topleft
+        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM],  # topright
+        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM - CORNER_ARUCO_SIZE_MM],  # botright
+        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM - CORNER_ARUCO_SIZE_MM, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM],  # botleft
     ],
     dtype=np.float32
-).copy(order="C")
+)
 CORNER_ORIGIN_DISTANCE_MM = 10
 HOLE_DISTANCE_MM = 24
 BOARD_X_MIN = 0
@@ -347,13 +347,14 @@ class Camera:
             return None
         print(REAL_ARUCO_CORNERS)
         corners = [corners for id, corners in ids_to_corners.items() if id in {TOP_RIGHT_ARUCO_ID, BOT_LEFT_ARUCO_ID}]
-        aruco_corners = np.concatenate([corners[i][0] for i in range(len(corners))], axis=0).astype(np.float32).copy(order="C")
+        aruco_corners = np.concatenate([corners[i][0] for i in range(len(corners))], axis=0).astype(np.float32)
         print(aruco_corners)
         h, _ = cv2.findHomography(aruco_corners, REAL_ARUCO_CORNERS)
         warped = cv2.warpPerspective(image, h, image.shape[:2])
 
         cv2.imshow("l", warped)
         cv2.waitKey(0)
+        exit()
 
         pixel_side_len = 0
 
