@@ -355,10 +355,6 @@ class Camera:
         h, _ = cv2.findHomography(aruco_corners, REAL_ARUCO_CORNERS)
         warped = cv2.warpPerspective(image, h, image.shape[:2])
 
-        cv2.imshow("l", warped)
-        cv2.waitKey(0)
-        exit()
-
         pixel_side_len = 0
 
         for corners in ids_to_corners.values():
