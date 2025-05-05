@@ -42,77 +42,55 @@ class GameController:
             return
         self.game = Game(board_size=self.board_size, ships=self.ships)
 
-    def get_ships(self) -> list[Ship] | None:
+    def get_ships(self, image: cv2.typing.MatLike | None = None) -> list[Ship] | None:
         """
         Converts raw ship data from the camera into Ship objects.
         Each ship is a list of coordinates.
         """
 
-        img = self.camera.get_image()
+        img = image if image is not None else self.camera.get_image()
         detected_holes = self.camera.detect_holes(img, show_img=False)
-        if not detect_holes:
+        if not detected_holes:
             return None
         color_to_coords = self.camera.detect_colors(img, show_img=False)
-        color_coords = [coord for coord_list in color_to_coords.values() for coord in coord_list]
-        board_coords = detected_holes + color_to_coords
+        coord_to_color = {
+            coord: color
+            for color, coord_lst in color_to_coords.items()
+            for coord in coord_lst
+        }
+        color_coords = [
+            coord for coord_list in color_to_coords.values() for coord in coord_list
+        ]
+        board_coords = [
+            (int(detected_hole[0]), int(detected_hole[1]))
+            for detected_hole in detected_holes
+        ] + color_coords
         if len(board_coords) != self.board_size[0] * self.board_size[1]:
             print("More holes than expected")
             return None
 
         board_coords_copy = board_coords.copy()
-        board_coord_to_image_coord: dict[tuple[int, int], tuple[int, int]] = {}
-        ship_len_to_board_coords: dict[int, list[tuple[int, int]]] = {}
+        image_coord_to_board_coord: dict[tuple[int, int], tuple[int, int]] = {}
         y_counter = 0
         while y_counter <= self.board_size[1] - 1:
             board_coords_copy.sort(key=lambda c: c[1])
             row = board_coords_copy[0 : self.board_size[0]]
             row.sort(key=lambda c: c[0])
             for i, c in enumerate(row):
-                board_coord_to_image_coord[(BOARD_X_MAX - i, y_counter)] = c
-                if center_to_color.get(c):
-                    ship_len_to_board_coords.setdefault(
-                        SHIP_COLOR_TO_LEN[center_to_color[c]], []
-                    )
-                    ship_len_to_board_coords[
-                        SHIP_COLOR_TO_LEN[center_to_color[c]]
-                    ].append(
-                        (
-                            BOARD_X_MAX - i,
-                            y_counter,
-                        )
-                    )
-            board_coords_copy = center_stack[BOARD_X_MAX + 1 :]
+                image_coord_to_board_coord[c] = (
+                    (self.board_size[0] - 1) - i,
+                    y_counter,
+                )
+            board_coords_copy = board_coords_copy[self.board_size[0] :]
             y_counter += 1
 
-        color_coord_to_hole_closest_distance: dict[COORD, tuple[COORD, float]] = {}
-
-        color_coord_to_color = {
-            coord: color
-            for color, coords in color_to_coords.items()
-            for coord in coords
-        }
-
-        for color_coord in color_coord_to_color:
-            for board_coord, hole_coord in board_coord_to_hole.items():
-                color_coord_to_hole_closest_distance.setdefault(
-                    color_coord, ((0, 0), inf)
-                )
-                dist = helper_funcs.eucl_dist(color_coord, hole_coord)
-                _, current_min = color_coord_to_hole_closest_distance[color_coord]
-                if dist < current_min:
-                    color_coord_to_hole_closest_distance[color_coord] = (
-                        board_coord,
-                        dist,
-                    )
-
-        color_to_board_coords = {}
-        for color_coord, (
-            board_coord,
-            _,
-        ) in color_coord_to_hole_closest_distance.items():
-            color = color_coord_to_color[color_coord]
-            color_to_board_coords.setdefault(color, [])
-            color_to_board_coords[color].append(board_coord)
+        color_to_board_coords: dict[str, list[tuple[int,int]]] = {}
+        for color_coord in color_coords:
+            color_to_board_coords.setdefault(coord_to_color[color_coord], [])
+            color_to_board_coords[coord_to_color[color_coord]].append(
+                image_coord_to_board_coord[color_coord]
+            )
+        print(color_to_board_coords)
 
         ships = []
 
@@ -120,7 +98,10 @@ class GameController:
             coord for coords in color_to_board_coords.values() for coord in coords
         ]
         if len(set(coords)) != len(coords):
-            print("Duplicate ship coords found", next(coord for coord in coords if coords.count(coord) > 1))
+            print(
+                "Duplicate ship coords found",
+                next(coord for coord in coords if coords.count(coord) > 1),
+            )
             return None
 
         for board_coords in color_to_board_coords.values():
@@ -257,11 +238,15 @@ class GameController:
 if __name__ == "__main__":
     c = GameController(Camera(0), True)
     while True:
-        img = c.camera.get_image()
-        c.camera.detect_arucos(img.copy())
-        g = c.get_guess(img, 1)
-        if g:
-            print(g)
+        # img = c.camera.get_image()
+        img = cv2.imread("DEBUG-skew.png")
+        ships = c.get_ships(img)
+        print([sorted(ship.filled) for ship in ships])
+        break
+        # c.camera.detect_arucos(img.copy())
+        # g = c.get_guess(img, 1)
+        # if g:
+        #     print(g)
 
         k = cv2.waitKey(5)
         if k == 27:
