@@ -17,4 +17,4 @@ def hsv_picker(image_path):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-hsv_picker("DEBUG-colors.png")
+hsv_picker("DEBUG-raw-hands.png")

@@ -121,7 +121,7 @@ class Camera:
             cv2.findContours(magenta_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         )
 
-        lower_red1 = np.array([0, 90, 100])
+        lower_red1 = np.array([0, 220, 100])
         upper_red1 = np.array([10, 255, 255])
         red_mask = cv2.inRange(hsv, lower_red1, upper_red1)
 
@@ -206,12 +206,17 @@ if __name__ == "__main__":
     cam = Camera(1)
     col = False
     while True:
-        img = cam.get_image()
+        # img = cam.get_image()
         #img = cv2.imread("../Airtable.png")
         # img = cv2.imread("DEBUG-skew.png")
+        # img = cv2.imread("DEBUG-too-many-holes.png")
+        img = cv2.imread("DEBUG-raw-hands.png")
+        img_raw = img.copy()
         if not col:
             col_img = img.copy()
-            cam.detect_holes(col_img, True)
+            color_to_coords = cam.detect_colors(img)
+            
+            cam.detect_holes(col_img, False)
 
         elif col:
             cam.detect_arucos(img.copy())
@@ -221,4 +226,4 @@ if __name__ == "__main__":
         if k == ord("s"):
             col = not col
         if k == ord("d"):
-            cv2.imwrite("DEBUG-raw.png", img)
+            cv2.imwrite("DEBUG-raw.png", img_raw)
