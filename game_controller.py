@@ -49,11 +49,40 @@ class GameController:
         """
 
         img = self.camera.get_image()
-        detect_holes = self.camera.detect_holes_from_aruco(img, show_img=False)
-        if detect_holes is None:
+        detected_holes = self.camera.detect_holes(img, show_img=False)
+        if not detect_holes:
             return None
-        board_coord_to_hole, px_per_mm = detect_holes
         color_to_coords = self.camera.detect_colors(img, show_img=False)
+        color_coords = [coord for coord_list in color_to_coords.values() for coord in coord_list]
+        board_coords = detected_holes + color_to_coords
+        if len(board_coords) != self.board_size[0] * self.board_size[1]:
+            print("More holes than expected")
+            return None
+
+        board_coords_copy = board_coords.copy()
+        board_coord_to_image_coord: dict[tuple[int, int], tuple[int, int]] = {}
+        ship_len_to_board_coords: dict[int, list[tuple[int, int]]] = {}
+        y_counter = 0
+        while y_counter <= self.board_size[1] - 1:
+            board_coords_copy.sort(key=lambda c: c[1])
+            row = board_coords_copy[0 : self.board_size[0]]
+            row.sort(key=lambda c: c[0])
+            for i, c in enumerate(row):
+                board_coord_to_image_coord[(BOARD_X_MAX - i, y_counter)] = c
+                if center_to_color.get(c):
+                    ship_len_to_board_coords.setdefault(
+                        SHIP_COLOR_TO_LEN[center_to_color[c]], []
+                    )
+                    ship_len_to_board_coords[
+                        SHIP_COLOR_TO_LEN[center_to_color[c]]
+                    ].append(
+                        (
+                            BOARD_X_MAX - i,
+                            y_counter,
+                        )
+                    )
+            board_coords_copy = center_stack[BOARD_X_MAX + 1 :]
+            y_counter += 1
 
         color_coord_to_hole_closest_distance: dict[COORD, tuple[COORD, float]] = {}
 
