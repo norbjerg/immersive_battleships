@@ -66,7 +66,7 @@ class GameController:
             for detected_hole in detected_holes
         ] + color_coords
         if len(board_coords) != self.board_size[0] * self.board_size[1]:
-            print("More holes than expected")
+            print("More holes than expected (actual, expected, colors, holes)", len(board_coords), self.board_size[0] * self.board_size[1], len(color_coords), len(detected_holes))
             return None
 
         board_coords_copy = board_coords.copy()

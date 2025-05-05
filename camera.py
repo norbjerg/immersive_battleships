@@ -86,8 +86,8 @@ class Camera:
             vis = cv2.drawKeypoints(image, keypoints, None, (0, 0, 255),
                                     cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
             cv2.imshow('Detected Holes', vis)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
 
         return positions
 
@@ -162,7 +162,7 @@ class Camera:
 
     def get_ids_of_detected_arucos(self, img) -> list[int]:
         aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
-            img, aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
+            img, aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
         )
         if ids is None:
             return []
@@ -171,7 +171,7 @@ class Camera:
 
     def detect_arucos(self, img):
         aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
-            img, aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
+            img, aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
         )
         if ids is None:
             cv2.imshow("aruco", img)
@@ -203,15 +203,15 @@ class Camera:
         cv2.imshow("aruco", img)
 
 if __name__ == "__main__":
-    cam = Camera(0)
+    cam = Camera(1)
     col = False
     while True:
-        # img = cam.get_image()
+        img = cam.get_image()
         #img = cv2.imread("../Airtable.png")
-        img = cv2.imread("DEBUG-skew.png")
+        # img = cv2.imread("DEBUG-skew.png")
         if not col:
             col_img = img.copy()
-            cam.test_otsu(col_img, True)
+            cam.detect_holes(col_img, True)
 
         elif col:
             cam.detect_arucos(img.copy())

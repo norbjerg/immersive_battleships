@@ -1,5 +1,5 @@
-PLAYER1_GUESS_CONFIRM = 49
-PLAYER2_GUESS_CONFIRM = 29
+PLAYER1_GUESS_CONFIRM = 100
+PLAYER2_GUESS_CONFIRM = 101
 
 # Note that these are the arucos, that player x will be able to guess on
 # Note that when the player is sitting opposite, it will flip the y values, so 13 in airtable system
