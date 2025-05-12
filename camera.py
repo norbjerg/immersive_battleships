@@ -70,7 +70,7 @@ class Camera:
         else:
             gray = image
 
-        params = cv2.SimpleBlobDetector_Params()
+        params = cv2.SimpleBlobDetector.Params()
         params.filterByArea = True
         params.minArea = 10
         params.maxArea = 100
@@ -78,7 +78,7 @@ class Camera:
         params.filterByCircularity = True
         params.minCircularity = 0.9
 
-        detector = cv2.SimpleBlobDetector_create(params)
+        detector = cv2.SimpleBlobDetector.create(params)
         keypoints = detector.detect(image)
 
         positions = [kp.pt for kp in keypoints]
