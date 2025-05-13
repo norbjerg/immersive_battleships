@@ -194,15 +194,15 @@ class Interface(pyglet.window.Window):
         # coordinates are flipped because for the player it is flipped to the airtable
         # when making guess on board2, we need to offset it, because given are full airtable coords
         if player_num == 1:
-            self.board2.hit((coord[1], coord[0] - 7))
+            self.board2.hit((coord[1], 13 - coord[0]))
         else:
-            self.board1.hit((coord[1], coord[0]))
+            self.board1.hit((11 - coord[1], coord[0]))
 
     def miss(self, player_num: int, coord: tuple[int, int]):
         if player_num == 1:
-            self.board2.miss((coord[1], coord[0] - 7))
+            self.board2.miss((coord[1], 13 - coord[0]))
         else:
-            self.board1.miss((coord[1], coord[0]))
+            self.board1.miss((11 - coord[1], coord[0]))
 
     def handle_game_status(self, status: GameStatus):
         match status:
