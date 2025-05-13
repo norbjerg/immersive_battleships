@@ -1,7 +1,7 @@
+from datetime import datetime
 import time
 from math import inf
 from time import sleep
-
 import cv2
 import pyglet
 
@@ -10,6 +10,7 @@ import helper_funcs
 from battleships import Game, GuessReturn, Ship
 from camera import Camera
 from ui import GameStatus, Interface
+import threading
 
 SHIP_SIZE_MM = 15
 
@@ -23,12 +24,19 @@ class GameController:
         self.ships: list[Ship] | None = None
         self.game = None
         self.dev = dev
+        self.stop_event = threading.Event()
 
     def reset(self):
         self.ships = None
         self.game = None
 
     def try_initialize(self):
+
+        if self.dev:
+            self.ships = self.get_dev_ships()
+            self.game = Game(board_size=self.board_size, ships=self.ships)
+
+
         detected_arucos = self.camera.get_ids_of_detected_arucos(
             self.camera.get_image()
         )
@@ -45,6 +53,33 @@ class GameController:
         if self.ships is None:
             return
         self.game = Game(board_size=self.board_size, ships=self.ships)
+
+    def get_dev_ships(self) -> list[Ship]:
+
+        camera_ships = [[(0,0),(0,1),(0,2)],[(13,0),(12,0),(11,0)]]
+        ships: list[Ship] = []
+
+        for sections in camera_ships:
+            if not sections:
+                continue
+
+            # Determine player by position on board.
+            left_half = all(x < self.board_size[0] // 2 for x, _ in sections)
+            right_half = all(x >= self.board_size[0] // 2 for x, _ in sections)
+
+            if not (left_half or right_half):
+                print(f"Skipping ship crossing center line: {sections}")
+                continue  # Invalid: ship crosses boundary
+
+            player = 1 if left_half else 2
+            try:
+                ship = Ship(sections, player)
+                ships.append(ship)
+            except ValueError as e:
+                print(f"Skipping invalid ship: {e}")
+                print(f"Found at: {sections}")
+
+        return ships
 
     def get_ships(self, image: cv2.typing.MatLike | None = None) -> list[Ship] | None:
         """
@@ -168,6 +203,7 @@ class GameController:
 
     def handle_next_frame(self, last_time: float, interface: Interface):
         if interface.key_handler[pyglet.window.key.ESCAPE]:
+            self.stop_event.set()
             exit(0)
 
         elapsed_time = time.perf_counter() - last_time
@@ -182,7 +218,9 @@ class GameController:
         """
         interface = Interface()
         last_time = time.perf_counter()
-
+        
+        recording_thread = threading.Thread(target=self.camera.record, args=(self.stop_event,))
+        recording_thread.start()
         while self.game is None:
             self.try_initialize()
             interface.handle_game_status(GameStatus.await_ship_confirmation)
@@ -190,17 +228,17 @@ class GameController:
             sleep(0.2)
 
         print([ship.filled for ship in self.ships])
-
+        dupe_guess = False
         while True:
             print(f"Player {self.game.current_player()}'s turn")
-            interface.handle_game_status(
-                GameStatus.player_num_to_await(self.game.current_player())
-            )
+            if not dupe_guess:
+                interface.handle_game_status(
+                    GameStatus.player_num_to_await(self.game.current_player())
+                )
             if self.dev:
                 try:
                     last_time = self.handle_next_frame(last_time, interface)
-                    for i in range(20):
-                        continue
+                    sleep(0.2)
                     raw_input = input("Enter your guess (x,y): ").strip()
                     x_str, y_str = raw_input.split(",")
                     guess = (int(x_str), int(y_str))
@@ -212,7 +250,6 @@ class GameController:
                     if not guess:
                         continue
             if not self.dev:
-                # Get guess from camera here
                 guess = None
                 while guess is None:
                     guess = self.get_guess()
@@ -220,9 +257,9 @@ class GameController:
                     sleep(0.2)
 
             current_player = self.game.current_player()
-            interface.handle_game_status(GameStatus.processing)
             result = self.game.make_guess(guess)
 
+            dupe_guess = False
             match result:
                 case GuessReturn.hit:
                     interface.hit(current_player, guess)
@@ -230,6 +267,7 @@ class GameController:
                     interface.miss(current_player, guess)
                 case GuessReturn.dupe_guess:
                     interface.handle_game_status(GameStatus.repeat_guess)
+                    dupe_guess = True
 
             print(f"Guess at {guess}: {result.value}")
 
@@ -237,6 +275,7 @@ class GameController:
                 print(f"Game Over! Player {self.game.current_player()} wins! ")
                 break
             print(result)
+        stop_event.set()
 
 
 if __name__ == "__main__":

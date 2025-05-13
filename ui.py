@@ -142,7 +142,7 @@ class InterfaceBoard:
 class Interface(pyglet.window.Window):
     def __init__(self):
         super().__init__()
-        self.set_size(1500, 600)
+        self.set_size(1800, 600)
         self.key_handler = pyglet.window.key.KeyStateHandler()
         self.push_handlers(self.key_handler)
 
@@ -174,12 +174,13 @@ class Interface(pyglet.window.Window):
         self.status_text: text.DocumentLabel = text.Label(
             "",
             self.width // 2 - 500,
-            100,
+            150,
             width=1000,
             height=100,
-            color=(220, 0, 0, 255),
+            color=(255, 255, 255, 255),
             align="center",
             multiline=True,
+            font_size=30,
         )
 
     def next_frame(self):

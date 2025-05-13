@@ -1,3 +1,4 @@
+from datetime import datetime
 import cv2
 import imutils
 import numpy as np
@@ -202,6 +203,19 @@ class Camera:
             )
         cv2.imshow("aruco", img)
 
+    def record(self, stop_event):
+        video_capture = cv2.VideoWriter(
+            f'video{int(datetime.now().timestamp())}.avi',
+            cv2.VideoWriter.fourcc(*'MJPG'),
+            24,
+            (int(self.cam.get(3)),int(self.cam.get(4)))
+        )
+
+        while not stop_event.is_set():
+            frame = self.get_image()
+        
+            video_capture.write(frame) 
+
 if __name__ == "__main__":
     cam = Camera(1)
     col = False
@@ -215,9 +229,9 @@ if __name__ == "__main__":
         img_raw = img.copy()
         if not col:
             col_img = img.copy()
-            color_to_coords = cam.detect_colors(img)
+            # color_to_coords = cam.detect_colors(img)
             
-            # cam.detect_holes(col_img, True)
+            cam.detect_holes(col_img, True)
 
         elif col:
             cam.detect_arucos(img.copy())
