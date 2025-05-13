@@ -2,13 +2,14 @@ from ast import literal_eval
 from enum import Enum
 from typing import Literal
 
-from port import Port
+from hardware import arduino_port
 from shift_valves import Table
 
-tableActive = False
+table_active = False
 
-if tableActive:
-    t = Table(Port)
+#Set arduino port in hardware.py matching the port where the arduino is connected
+if table_active:
+    t = Table(arduino_port)
     t.clear()
 
 AVAILABLE_SHIPS = {
@@ -181,7 +182,7 @@ class PlayerBoard:
 
         self.guesses.add(coord)
 
-        if tableActive:
+        if table_active:
             t.burst(coord)
         else:
             print(coord)

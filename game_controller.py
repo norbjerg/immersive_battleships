@@ -6,10 +6,9 @@ import cv2
 import pyglet
 
 import aruco_map
-import helper_funcs
 from battleships import Game, GuessReturn, Ship
 from camera import Camera
-from ui import GameStatus, Interface
+from interface import GameStatus, Interface
 
 SHIP_SIZE_MM = 15
 
@@ -34,9 +33,9 @@ class GameController:
         )
         pl1x = aruco_map.PLAYER1_VERTICAL_Y_COORD_TO_ARUCO_ID
         pl1y = aruco_map.PLAYER1_HORIZONTAL_X_COORD_TO_ARUCO_ID
-        pl2x = aruco_map.PLAYER2_VERTICAL_Y_COORD_TO_ARUCO_ID 
+        pl2x = aruco_map.PLAYER2_VERTICAL_Y_COORD_TO_ARUCO_ID
         pl2y = aruco_map.PLAYER2_HORIZONTAL_X_COORD_TO_ARUCO_ID
-        
+
         zero_ids = {min(pl_dict.keys()) for pl_dict in (pl1x, pl1y, pl2x, pl2y)}
         detected_arucos_set = set(detected_arucos)
         if not zero_ids.issubset(detected_arucos_set):
@@ -110,7 +109,7 @@ class GameController:
 
         for board_coords in color_to_board_coords.values():
             try:
-                left, right = helper_funcs.split_coords(
+                left, right = self.split_coords(
                     self.board_size[0], board_coords
                 )
             except ValueError as e:
@@ -127,6 +126,14 @@ class GameController:
                     return None
 
         return ships
+
+    def split_coords(board_x_len: int, points: list[tuple[int, int]]):
+        """"x_coord is usually something like self.board_size[0]"""
+        left_half = [point for point in points if point[0] < board_x_len // 2]
+        right_half = [point for point in points if point[0] >= board_x_len // 2]
+        if len(left_half) != len(right_half):
+            raise ValueError("More ship sections on one side")
+        return ((left_half, 1), (right_half, 2))
 
     def get_guess(
         self, img: cv2.typing.MatLike | None = None, player_num: int | None = None
