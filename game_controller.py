@@ -38,7 +38,7 @@ class GameController:
         pl2y = aruco_map.PLAYER2_HORIZONTAL_X_COORD_TO_ARUCO_ID
         
         zero_ids = {min(pl_dict.keys()) for pl_dict in (pl1x, pl1y, pl2x, pl2y)}
-
+        detected_arucos_set = set(detected_arucos)
         if not zero_ids.issubset(detected_arucos_set):
             return
         self.ships = self.get_ships()
