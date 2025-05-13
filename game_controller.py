@@ -32,10 +32,14 @@ class GameController:
         detected_arucos = self.camera.get_ids_of_detected_arucos(
             self.camera.get_image()
         )
-        if (
-            aruco_map.PLAYER1_GUESS_CONFIRM not in detected_arucos
-            and aruco_map.PLAYER2_GUESS_CONFIRM not in detected_arucos
-        ):
+        pl1x = aruco_map.PLAYER1_VERTICAL_Y_COORD_TO_ARUCO_ID
+        pl1y = aruco_map.PLAYER1_HORIZONTAL_X_COORD_TO_ARUCO_ID
+        pl2x = aruco_map.PLAYER2_VERTICAL_Y_COORD_TO_ARUCO_ID 
+        pl2y = aruco_map.PLAYER2_HORIZONTAL_X_COORD_TO_ARUCO_ID
+        
+        zero_ids = {min(pl_dict.keys()) for pl_dict in (pl1x, pl1y, pl2x, pl2y)}
+
+        if not zero_ids.issubset(detected_arucos_set):
             return
         self.ships = self.get_ships()
         if self.ships is None:
