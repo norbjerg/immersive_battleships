@@ -219,7 +219,7 @@ class Interface(pyglet.window.Window):
             case GameStatus.await_ship_confirmation:
                 self.status_text.text = (
                     "Awaiting for players to be ready.\n"
-                    "Both players must hold down fire button when ready."
+                    "Both players must set their guessing dials to 0,0 when ready."
                 )
 
 
