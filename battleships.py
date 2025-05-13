@@ -9,6 +9,7 @@ tableActive = False
 
 if tableActive:
     t = Table(Port)
+    t.clear()
 
 AVAILABLE_SHIPS = {
     2: 1,
