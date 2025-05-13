@@ -137,7 +137,7 @@ class Camera:
         ):
             for cnt in contours:
                 area = cv2.contourArea(cnt)
-                if area > 20 and area < 400:
+                if area > 50 and area < 400:
                     M = cv2.moments(cnt)
                     cX = int(M["m10"] / M["m00"]) if M["m00"] != 0 else 0
                     cY = int(M["m01"] / M["m00"]) if M["m00"] != 0 else 0
@@ -206,17 +206,18 @@ if __name__ == "__main__":
     cam = Camera(1)
     col = False
     while True:
-        # img = cam.get_image()
+        img = cam.get_image()
         #img = cv2.imread("../Airtable.png")
         # img = cv2.imread("DEBUG-skew.png")
         # img = cv2.imread("DEBUG-too-many-holes.png")
-        img = cv2.imread("DEBUG-raw-hands.png")
+        # img = cv2.imread("DEBUG-raw-hands.png")
+        # img = cv2.imread("DEBUG-light-area.png")
         img_raw = img.copy()
         if not col:
             col_img = img.copy()
             color_to_coords = cam.detect_colors(img)
             
-            cam.detect_holes(col_img, False)
+            # cam.detect_holes(col_img, True)
 
         elif col:
             cam.detect_arucos(img.copy())
