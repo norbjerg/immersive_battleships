@@ -1,7 +1,11 @@
-# Ignore any potential debug pictures
+# Ignore .github repo
+.github/
+# Ignore any potential debug pictures, but keep development pngs
 *.png
+*.avi
 !images/*.png
 !Board_w_aruco.png
+!DEBUG-skew.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
