@@ -31,11 +31,12 @@ class GameController:
         self.game = None
 
     def split_coords(self, board_x_len: int, points: list[tuple[int, int]]):
-        """"x_coord is usually something like self.board_size[0]"""
         """
         Splits coordinates into board sides.
 
         Returns a list with coords split into left and right halves.
+
+        x_coord is usually something like self.board_size[0]
         """
         left_half = [point for point in points if point[0] < board_x_len // 2]
         right_half = [point for point in points if point[0] >= board_x_len // 2]
