@@ -13,10 +13,10 @@ The game can be run via the entrypoint located in main.py with the command:
 ```
 python3 main.py 
 ```
-Before running the game, you need to make sure that the hardware_variables.py file has been updated to match your environment. This means changing the following:\
+Before running the game, you need to make sure that the `hardware_variables.py` file has been updated to match your environment. This means changing the following:\
 - `Port` - This is the port for the arduino of the air table. Help to finding your port can be found [Here](https://www.mathworks.com/help/matlab/supportpkg/find-arduino-port-on-windows-mac-and-linux.html)
 - `CameraNum` - This is the camera number of the connected camera you wish to use for the camera integration.
-- `TableActive` - Tells the battleship game if the air table is connected. If set to true the battleship game will attempt to create an instance of the Table class and try to send commands to the air table arduino.
+- `TableActive` - This tells the battleship game if the air table is connected. If set to true the battleship game will attempt to create an instance of the Table class and try to send commands to the air table arduino.\
 When running the game a UI will be shown on the computer, which is in place to help players keep track of guesses and game state.
 
 ## Developer mode:
