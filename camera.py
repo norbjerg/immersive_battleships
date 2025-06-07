@@ -15,8 +15,6 @@ def img_show(img, title="debug"):
     """
     Shows an image.
 
-    Returns nothing.
-    
     Used for debugging.
     """
     cv2.imshow(title, img)
@@ -150,7 +148,7 @@ class Camera:
         """
         Detects aruco markers present in a given image.
 
-        Highlights the found markers with ids and shows the image. Returns nothing.
+        Highlights the found markers with ids and shows the image.
 
         Primarily used for debugging purposes.
         """
@@ -189,8 +187,6 @@ class Camera:
     def record(self, stop_event):
         """
         Records video from the connected camera.
-
-        Returns nothing.
         
         Primarily used for capturing video for report purposes.
         """
