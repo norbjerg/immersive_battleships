@@ -1,12 +1,10 @@
 from enum import Enum
 from typing import Literal
 
-from hardware_variables import Port
+from hardware_variables import Port, TableActive
 from shift_valves import Table
 
-tableActive = False
-
-if tableActive:
+if TableActive:
     t = Table(Port)
     t.clear()
 
@@ -180,7 +178,7 @@ class PlayerBoard:
 
         self.guesses.add(coord)
 
-        if tableActive:
+        if TableActive:
             t.burst(coord)
         else:
             print(coord)
