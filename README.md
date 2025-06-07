@@ -1,6 +1,6 @@
 # Immersive battleships
 This is the repository for the BSc project Immersive Battleships, created by Nicolaj Auerbach Nielsen, Lasse Nørbjerg, and Rasmus Kjersgaard Bak.\
-The project has been made with integration to the air table and requires both the air table and a camera to be connected to the computer for the intended intended gameplay experience.
+The project has been made with integration to the air table and requires both the air table and a camera to be connected to the computer for the intended gameplay experience.
 
 ## Installing required packages
 All the packages required to run the project are listed in `requirements.txt`. To install all of the packages we suggest running:
