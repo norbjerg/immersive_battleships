@@ -24,11 +24,19 @@ class GameController:
         self.stop_event = threading.Event()
 
     def reset(self):
+        """
+        Resets the game.
+        """
         self.ships = None
         self.game = None
 
     def split_coords(self, board_x_len: int, points: list[tuple[int, int]]):
         """"x_coord is usually something like self.board_size[0]"""
+        """
+        Splits coordinates into board sides.
+
+        Returns a list with coords split into left and right halves.
+        """
         left_half = [point for point in points if point[0] < board_x_len // 2]
         right_half = [point for point in points if point[0] >= board_x_len // 2]
         if len(left_half) != len(right_half):
@@ -36,7 +44,9 @@ class GameController:
         return ((left_half, 1), (right_half, 2))
 
     def try_initialize(self):
-
+        """
+        Tries to initialize the game.
+        """
         if self.dev:
             self.ships = self.get_dev_ships()
             self.game = Game(board_size=self.board_size, ships=self.ships)
@@ -60,6 +70,11 @@ class GameController:
         self.game = Game(board_size=self.board_size, ships=self.ships)
 
     def get_dev_ships(self) -> list[Ship]:
+        """
+        Provides the list of ships for development mode.
+
+        Returns a list of ships.
+        """
 
         camera_ships = [[(0,0),(0,1),(0,2)],[(13,0),(12,0),(11,0)]]
         ships: list[Ship] = []
@@ -90,6 +105,8 @@ class GameController:
         """
         Converts raw ship data from the camera into Ship objects.
         Each ship is a list of coordinates.
+
+        Returns list of ships if creation was succesful. Else it returns None.
         """
 
         img = image if image is not None else self.camera.get_image()
@@ -171,6 +188,11 @@ class GameController:
     def get_guess(
         self, img: cv2.typing.MatLike | None = None, player_num: int | None = None
     ) -> tuple[int, int] | None:
+        """
+        Tries to read the guess from the camera
+
+        Returns guess if present. Else it returns None
+        """
         img = img if img is not None else self.camera.get_image()
         ids = self.camera.get_ids_of_detected_arucos(img)
         if not player_num:
@@ -207,6 +229,11 @@ class GameController:
         return y_map[ys[0]], x_map[xs[0]]
 
     def handle_next_frame(self, last_time: float, interface: Interface):
+        """
+        Generates the next frame for the UI.
+
+        Returns the last time the UI was updated.
+        """
         if interface.key_handler[pyglet.window.key.ESCAPE]:
             self.stop_event.set()
             exit(0)
@@ -224,8 +251,10 @@ class GameController:
         interface = Interface()
         last_time = time.perf_counter()
 
-        recording_thread = threading.Thread(target=self.camera.record, args=(self.stop_event,))
-        recording_thread.start()
+        if not self.dev:
+            recording_thread = threading.Thread(target=self.camera.record, args=(self.stop_event,))
+            recording_thread.start()
+            
         while self.game is None:
             self.try_initialize()
             interface.handle_game_status(GameStatus.await_ship_confirmation)
