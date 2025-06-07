@@ -11,7 +11,14 @@ COLOR_TO_BGR = {
     "red": (20, 20, 255),
 }
 
-def img_show(img, title="lol"):
+def img_show(img, title="debug"):
+    """
+    Shows an image.
+
+    Returns nothing.
+    
+    Used for debugging.
+    """
     cv2.imshow(title, img)
     cv2.waitKey(0)
 
@@ -21,12 +28,22 @@ class Camera:
         self.cam = cv2.VideoCapture(cam_num, cv2.CAP_DSHOW)
 
     def get_image(self) -> np.ndarray:
+        """
+        Captures an image from the connected camera.
+
+        Returns the captured image.
+        """
         result, image = self.cam.read()
         if result:
             return image
         raise RuntimeError("Could not capture image")
 
     def detect_holes(self, image: typing.MatLike, show_img: bool = False) -> list[tuple[float, float]]:
+        """
+        Detects circular holes on the given image.
+
+        Returns a list of the found holes in image coordinates.
+        """
         params = cv2.SimpleBlobDetector.Params()
         params.filterByArea = True
         params.minArea = 10
@@ -116,6 +133,11 @@ class Camera:
         return color_to_centers
 
     def get_ids_of_detected_arucos(self, img) -> list[int]:
+        """
+        Detects aruco codes present in a given image.
+
+        Returns a list of ids of the found arucos.
+        """
         _, ids, _ = aruco.detectMarkers(
             img, aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
         )
@@ -125,6 +147,13 @@ class Camera:
         return [int(id) for id in ids]
 
     def detect_arucos(self, img):
+        """
+        Detects aruco markers present in a given image.
+
+        Highlights the found markers with ids and shows the image. Returns nothing.
+
+        Primarily used for debugging purposes.
+        """
         aruco_corners, ids, _ = aruco.detectMarkers(
             img, aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
         )
@@ -158,6 +187,13 @@ class Camera:
         cv2.imshow("aruco", img)
 
     def record(self, stop_event):
+        """
+        Records video from the connected camera.
+
+        Returns nothing.
+        
+        Primarily used for capturing video for report purposes.
+        """
         video_capture = cv2.VideoWriter(
             f'video{int(datetime.now().timestamp())}.avi',
             cv2.VideoWriter.fourcc(*'MJPG'),
