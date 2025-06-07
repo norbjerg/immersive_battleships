@@ -4,51 +4,12 @@ import imutils
 import numpy as np
 from cv2 import aruco, typing
 
-BOT_LEFT_ARUCO_ID = 0
-TOP_RIGHT_ARUCO_ID = 1
-CORNER_ARUCO_SIZE_MM = 45
-BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM = (
-    347  # Note that these are the bottom left corner of the markers
-)
-BOTTOM_ARUCO_TO_TOP_VERTICAL_MM = 279  # and top right corner respectively
-OFFSET = 60
-REAL_ARUCO_CORNERS = np.array(
-    [
-        # bottom left aruco
-        [0 + OFFSET, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM - CORNER_ARUCO_SIZE_MM + OFFSET],  # topleft
-        [CORNER_ARUCO_SIZE_MM + OFFSET, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM - CORNER_ARUCO_SIZE_MM + OFFSET],  # topright
-        [CORNER_ARUCO_SIZE_MM + OFFSET, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM + OFFSET],  # botright
-        [0 + OFFSET, BOTTOM_ARUCO_TO_TOP_VERTICAL_MM + OFFSET],  # botleft
-        # top right aruco
-        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM - CORNER_ARUCO_SIZE_MM + OFFSET, 0 + OFFSET],  # topleft
-        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM + OFFSET, 0 + OFFSET],  # topright
-        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM + OFFSET, CORNER_ARUCO_SIZE_MM + OFFSET],  # botright
-        [BOTTOM_ARUCO_TO_TOP_HORIZONTAL_MM - CORNER_ARUCO_SIZE_MM + OFFSET, CORNER_ARUCO_SIZE_MM + OFFSET],  # botleft
-    ],
-    dtype=np.float32
-)
-CORNER_ORIGIN_DISTANCE_MM = 10
-HOLE_COUNT = 168
-HOLE_DISTANCE_MM = 24
-BOARD_X_MIN = 0
-BOARD_Y_MIN = 0
-BOARD_X_MAX = 13
-BOARD_Y_MAX = 11
-CLOSENESS_THRESHOLD = 2
-BOUND_FEATHER = 10
-SHIP_COLOR_TO_LEN = {
-    "magenta": 2,
-    "green": 3,
-    "red": 4,
-    "blue": 5,
-}
 COLOR_TO_BGR = {
     "blue": (255, 20, 20),
     "magenta": (236, 0, 252),
     "green": (20, 255, 20),
     "red": (20, 20, 255),
 }
-
 
 def img_show(img, title="lol"):
     cv2.imshow(title, img)
@@ -66,11 +27,6 @@ class Camera:
         raise RuntimeError("Could not capture image")
 
     def detect_holes(self, image: typing.MatLike, show_img: bool = False) -> list[tuple[float, float]]:
-        if len(image.shape) == 3:
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        else:
-            gray = image
-
         params = cv2.SimpleBlobDetector.Params()
         params.filterByArea = True
         params.minArea = 10
@@ -87,8 +43,6 @@ class Camera:
             vis = cv2.drawKeypoints(image, keypoints, None, (0, 0, 255),
                                     cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
             cv2.imshow('Detected Holes', vis)
-            # cv2.waitKey(0)
-            # cv2.destroyAllWindows()
 
         return positions
 
@@ -162,7 +116,7 @@ class Camera:
         return color_to_centers
 
     def get_ids_of_detected_arucos(self, img) -> list[int]:
-        aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
+        ids = aruco.detectMarkers(
             img, aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
         )
         if ids is None:
@@ -171,7 +125,7 @@ class Camera:
         return [int(id) for id in ids]
 
     def detect_arucos(self, img):
-        aruco_corners, ids, rejectedImgPoints = aruco.detectMarkers(
+        aruco_corners, ids = aruco.detectMarkers(
             img, aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
         )
         if ids is None:
@@ -213,32 +167,5 @@ class Camera:
 
         while not stop_event.is_set():
             frame = self.get_image()
-        
-            video_capture.write(frame) 
 
-if __name__ == "__main__":
-    cam = Camera(1)
-    col = False
-    while True:
-        img = cam.get_image()
-        #img = cv2.imread("../Airtable.png")
-        # img = cv2.imread("DEBUG-skew.png")
-        # img = cv2.imread("DEBUG-too-many-holes.png")
-        # img = cv2.imread("DEBUG-raw-hands.png")
-        # img = cv2.imread("DEBUG-light-area.png")
-        img_raw = img.copy()
-        if not col:
-            col_img = img.copy()
-            # color_to_coords = cam.detect_colors(img)
-            
-            cam.detect_holes(col_img, True)
-
-        elif col:
-            cam.detect_arucos(img.copy())
-        k = cv2.waitKey(5)
-        if k == 27:
-            break
-        if k == ord("s"):
-            col = not col
-        if k == ord("d"):
-            cv2.imwrite("DEBUG-raw.png", img_raw)
+            video_capture.write(frame)

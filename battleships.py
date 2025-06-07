@@ -1,8 +1,7 @@
-from ast import literal_eval
 from enum import Enum
 from typing import Literal
 
-from port import Port
+from hardware_variables import Port
 from shift_valves import Table
 
 tableActive = False
@@ -41,8 +40,8 @@ class Ship:
             raise ValueError("Ship must have at least two sections")
         self.player = player
 
-        xs = [x for x, y in sections]
-        ys = [y for x, y in sections]
+        xs = [x for x, _ in sections]
+        ys = [y for _, y in sections]
 
         if all(x == xs[0] for x in xs):
             sorted_ys = sorted(ys)
