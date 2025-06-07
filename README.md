@@ -21,13 +21,13 @@ Before running the game, you need to make sure that the `hardware_variables.py` 
 When running the game a UI will be shown on the computer, which is in place to help players keep track of guesses and game state.
 
 ## Developer mode:
-The game has a developer mode which initializes the game without using the camera integration. To run the game in developer mode, you add the -dev flag:
+The game has a developer mode which initializes the game without using the camera integration. To run the game in developer mode, you add the `-dev` flag:
 ```
 python3 main.py -dev
 ```
 
 ## Testing:
-A small suite of unit tests have been written for the core functionality of the battleship game. These tests are located in the "tests" directory. These can be run from the root of the project using:
+A small suite of unit tests have been written for the core functionality of the battleship game. These tests are located in the `tests/`directory. These can be run from the root of the project using:
 ```
 python3 -m tests.battleship_tests -b
 ```
