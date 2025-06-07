@@ -122,7 +122,7 @@ class Game:
         """
         Places the guess on the current board.
         
-        Returns the game state the guess lead to.
+        Returns the game state the guess led to.
         """
         game_state = self.current_board.make_guess(guess)
         match game_state:
