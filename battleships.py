@@ -26,11 +26,11 @@ class GuessReturn(Enum):
 
 class Ship:
     """
-    start_pos is the board coordinate of where one end of the ship is
+    start_pos is the board coordinate of where one end of the ship is.
 
-    end_pos is the board coordinate of where the other end of the ship is
+    end_pos is the board coordinate of where the other end of the ship is.
 
-    player signifies which player the ship belongs to
+    player signifies which player the ship belongs to.
     """
 
     def __init__(self, sections: list[tuple[int, int]], player: int) -> None:
@@ -64,9 +64,9 @@ class Ship:
 
 class Game:
     """
-    board_size is given as the dimensions of the board being played
+    board_size is given as the dimensions of the board being played.
 
-    ships are given as a list of Ship objects
+    ships are given as a list of Ship objects.
     """
 
     def __init__(self, board_size: tuple[int, int], ships: list[Ship]) -> None:
@@ -120,7 +120,9 @@ class Game:
 
     def make_guess(self, guess: tuple[int, int]) -> GuessReturn:
         """
-        Places the guess on the current board
+        Places the guess on the current board.
+        
+        Returns the game state the guess lead to.
         """
         game_state = self.current_board.make_guess(guess)
         match game_state:
@@ -145,9 +147,9 @@ class PlayerBoard:
         player_num: int,
     ) -> None:
         """
-        ships are given as a list of Ship objects
+        ships are given as a list of Ship objects.
 
-        player_num identifies which player the board belongs to
+        player_num identifies which player the board belongs to.
         """
         self.x = width
         self.y = height
@@ -173,6 +175,8 @@ class PlayerBoard:
     def in_bounds(self, coord: tuple[int, int]) -> bool:
         """
         Checks if the given coord is in bounds of the players board
+
+        Returns a bool. True signifying the coords are in bounds.
         """
         return self.x[0] <= coord[0] <= self.x[1] and self.y[0] <= coord[1] <= self.y[1]
 
@@ -180,7 +184,9 @@ class PlayerBoard:
         """
         Let the other player make a guess on this board.
 
-        The coord param should be in the coordinate system of the full air table (i.e. 14x12)
+        The coord param should be in the coordinate system of the full air table (i.e. 14x12).
+
+        Returns the state of the guess.
         """
         if coord in self.guesses:
             return GuessReturn.dupe_guess
