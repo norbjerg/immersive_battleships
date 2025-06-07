@@ -1,12 +1,9 @@
-from datetime import datetime
 import time
-from math import inf
 from time import sleep
 import cv2
 import pyglet
 
 import aruco_map
-import helper_funcs
 from battleships import Game, GuessReturn, Ship
 from camera import Camera
 from ui import GameStatus, Interface
@@ -27,11 +24,30 @@ class GameController:
         self.stop_event = threading.Event()
 
     def reset(self):
+        """
+        Resets the game.
+        """
         self.ships = None
         self.game = None
 
-    def try_initialize(self):
+    def split_coords(self, board_x_len: int, points: list[tuple[int, int]]):
+        """
+        Splits coordinates into board sides.
 
+        Returns a list with coords split into left and right halves.
+
+        x_coord is usually something like self.board_size[0]
+        """
+        left_half = [point for point in points if point[0] < board_x_len // 2]
+        right_half = [point for point in points if point[0] >= board_x_len // 2]
+        if len(left_half) != len(right_half):
+            raise ValueError("More ship sections on one side")
+        return ((left_half, 1), (right_half, 2))
+
+    def try_initialize(self):
+        """
+        Tries to initialize the game.
+        """
         if self.dev:
             self.ships = self.get_dev_ships()
             self.game = Game(board_size=self.board_size, ships=self.ships)
@@ -42,9 +58,9 @@ class GameController:
         )
         pl1x = aruco_map.PLAYER1_VERTICAL_Y_COORD_TO_ARUCO_ID
         pl1y = aruco_map.PLAYER1_HORIZONTAL_X_COORD_TO_ARUCO_ID
-        pl2x = aruco_map.PLAYER2_VERTICAL_Y_COORD_TO_ARUCO_ID 
+        pl2x = aruco_map.PLAYER2_VERTICAL_Y_COORD_TO_ARUCO_ID
         pl2y = aruco_map.PLAYER2_HORIZONTAL_X_COORD_TO_ARUCO_ID
-        
+
         zero_ids = {min(pl_dict.keys()) for pl_dict in (pl1x, pl1y, pl2x, pl2y)}
         detected_arucos_set = set(detected_arucos)
         if not zero_ids.issubset(detected_arucos_set):
@@ -55,6 +71,11 @@ class GameController:
         self.game = Game(board_size=self.board_size, ships=self.ships)
 
     def get_dev_ships(self) -> list[Ship]:
+        """
+        Provides the list of ships for development mode.
+
+        Returns a list of ships.
+        """
 
         camera_ships = [[(0,0),(0,1),(0,2)],[(13,0),(12,0),(11,0)]]
         ships: list[Ship] = []
@@ -85,6 +106,8 @@ class GameController:
         """
         Converts raw ship data from the camera into Ship objects.
         Each ship is a list of coordinates.
+
+        Returns list of ships if creation was succesful. Else it returns None.
         """
 
         img = image if image is not None else self.camera.get_image()
@@ -145,7 +168,7 @@ class GameController:
 
         for board_coords in color_to_board_coords.values():
             try:
-                left, right = helper_funcs.split_coords(
+                left, right = self.split_coords(
                     self.board_size[0], board_coords
                 )
             except ValueError as e:
@@ -166,6 +189,11 @@ class GameController:
     def get_guess(
         self, img: cv2.typing.MatLike | None = None, player_num: int | None = None
     ) -> tuple[int, int] | None:
+        """
+        Tries to read the guess from the camera
+
+        Returns guess if present. Else it returns None
+        """
         img = img if img is not None else self.camera.get_image()
         ids = self.camera.get_ids_of_detected_arucos(img)
         if not player_num:
@@ -202,6 +230,11 @@ class GameController:
         return y_map[ys[0]], x_map[xs[0]]
 
     def handle_next_frame(self, last_time: float, interface: Interface):
+        """
+        Generates the next frame for the UI.
+
+        Returns the last time the UI was updated.
+        """
         if interface.key_handler[pyglet.window.key.ESCAPE]:
             self.stop_event.set()
             exit(0)
@@ -218,9 +251,11 @@ class GameController:
         """
         interface = Interface()
         last_time = time.perf_counter()
-        
-        recording_thread = threading.Thread(target=self.camera.record, args=(self.stop_event,))
-        recording_thread.start()
+
+        if not self.dev:
+            recording_thread = threading.Thread(target=self.camera.record, args=(self.stop_event,))
+            recording_thread.start()
+            
         while self.game is None:
             self.try_initialize()
             interface.handle_game_status(GameStatus.await_ship_confirmation)
@@ -247,8 +282,6 @@ class GameController:
                         "Invalid input format. Please enter coordinates like '3,5'.\n"
                     )
                     continue
-                    if not guess:
-                        continue
             if not self.dev:
                 guess = None
                 while guess is None:
@@ -275,22 +308,5 @@ class GameController:
                 print(f"Game Over! Player {self.game.current_player()} wins! ")
                 break
             print(result)
-        stop_event.set()
-
-
-if __name__ == "__main__":
-    c = GameController(Camera(0), True)
-    while True:
-        # img = c.camera.get_image()
-        img = cv2.imread("DEBUG-skew.png")
-        ships = c.get_ships(img)
-        print([sorted(ship.filled) for ship in ships])
-        break
-        # c.camera.detect_arucos(img.copy())
-        # g = c.get_guess(img, 1)
-        # if g:
-        #     print(g)
-
-        k = cv2.waitKey(5)
-        if k == 27:
-            break
+        self.stop_event.set()
+        exit(0)

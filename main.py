@@ -1,9 +1,10 @@
 from camera import Camera
 from game_controller import GameController
+from hardware_variables import CameraNum
 import argparse
 
 def main(dev_mode=False):
-    camera = Camera(1) # Set camera number matching webcam
+    camera = Camera(CameraNum)
     game_controller = GameController(camera, dev_mode)
     game_controller.run()
 

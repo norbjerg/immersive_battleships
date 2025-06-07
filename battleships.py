@@ -1,13 +1,10 @@
-from ast import literal_eval
 from enum import Enum
 from typing import Literal
 
-from port import Port
+from hardware_variables import Port, TableActive
 from shift_valves import Table
 
-tableActive = False
-
-if tableActive:
+if TableActive:
     t = Table(Port)
     t.clear()
 
@@ -29,11 +26,11 @@ class GuessReturn(Enum):
 
 class Ship:
     """
-    start_pos is the board coordinate of where one end of the ship is
+    start_pos is the board coordinate of where one end of the ship is.
 
-    end_pos is the board coordinate of where the other end of the ship is
+    end_pos is the board coordinate of where the other end of the ship is.
 
-    player signifies which player the ship belongs to
+    player signifies which player the ship belongs to.
     """
 
     def __init__(self, sections: list[tuple[int, int]], player: int) -> None:
@@ -41,8 +38,8 @@ class Ship:
             raise ValueError("Ship must have at least two sections")
         self.player = player
 
-        xs = [x for x, y in sections]
-        ys = [y for x, y in sections]
+        xs = [x for x, _ in sections]
+        ys = [y for _, y in sections]
 
         if all(x == xs[0] for x in xs):
             sorted_ys = sorted(ys)
@@ -67,9 +64,9 @@ class Ship:
 
 class Game:
     """
-    board_size is given as the dimensions of the board being played
+    board_size is given as the dimensions of the board being played.
 
-    ships are given as a list of Ship objects
+    ships are given as a list of Ship objects.
     """
 
     def __init__(self, board_size: tuple[int, int], ships: list[Ship]) -> None:
@@ -96,14 +93,23 @@ class Game:
         print(self.p2_board.y)
 
     def alternator(self):
+        """
+        Alternates between returning board for p1 and p2
+        """
         while True:
             yield self.p2_board
             yield self.p1_board
 
     def switch_turn(self):
+        """
+        Switches the turn
+        """
         self.current_board = next(self.alternate)
 
     def current_player(self) -> Literal[1, 2]:
+        """
+        Returns which player is currently guessing
+        """
         match self.current_board.player_num:
             case 1:
                 return 2
@@ -113,6 +119,11 @@ class Game:
                 raise ValueError("Not a playernum")
 
     def make_guess(self, guess: tuple[int, int]) -> GuessReturn:
+        """
+        Places the guess on the current board.
+        
+        Returns the game state the guess led to.
+        """
         game_state = self.current_board.make_guess(guess)
         match game_state:
             case GuessReturn.out_of_bounds:
@@ -136,9 +147,9 @@ class PlayerBoard:
         player_num: int,
     ) -> None:
         """
-        ships are given as a list of Ship objects
+        ships are given as a list of Ship objects.
 
-        player_num identifies which player the board belongs to
+        player_num identifies which player the board belongs to.
         """
         self.x = width
         self.y = height
@@ -164,6 +175,8 @@ class PlayerBoard:
     def in_bounds(self, coord: tuple[int, int]) -> bool:
         """
         Checks if the given coord is in bounds of the players board
+
+        Returns a bool. True signifying the coords are in bounds.
         """
         return self.x[0] <= coord[0] <= self.x[1] and self.y[0] <= coord[1] <= self.y[1]
 
@@ -171,7 +184,9 @@ class PlayerBoard:
         """
         Let the other player make a guess on this board.
 
-        The coord param should be in the coordinate system of the full air table (i.e. 14x12)
+        The coord param should be in the coordinate system of the full air table (i.e. 14x12).
+
+        Returns the state of the guess.
         """
         if coord in self.guesses:
             return GuessReturn.dupe_guess
@@ -181,7 +196,7 @@ class PlayerBoard:
 
         self.guesses.add(coord)
 
-        if tableActive:
+        if TableActive:
             t.burst(coord)
         else:
             print(coord)
