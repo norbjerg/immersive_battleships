@@ -116,7 +116,7 @@ class Camera:
         return color_to_centers
 
     def get_ids_of_detected_arucos(self, img) -> list[int]:
-        ids = aruco.detectMarkers(
+        _, ids, _ = aruco.detectMarkers(
             img, aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
         )
         if ids is None:
@@ -125,7 +125,7 @@ class Camera:
         return [int(id) for id in ids]
 
     def detect_arucos(self, img):
-        aruco_corners, ids = aruco.detectMarkers(
+        aruco_corners, ids, _ = aruco.detectMarkers(
             img, aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
         )
         if ids is None:

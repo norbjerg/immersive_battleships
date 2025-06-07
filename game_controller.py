@@ -279,3 +279,4 @@ class GameController:
                 break
             print(result)
         self.stop_event.set()
+        exit(0)
