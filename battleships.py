@@ -93,14 +93,23 @@ class Game:
         print(self.p2_board.y)
 
     def alternator(self):
+        """
+        Alternates between returning board for p1 and p2
+        """
         while True:
             yield self.p2_board
             yield self.p1_board
 
     def switch_turn(self):
+        """
+        Switches the turn
+        """
         self.current_board = next(self.alternate)
 
     def current_player(self) -> Literal[1, 2]:
+        """
+        Returns which player is currently guessing
+        """
         match self.current_board.player_num:
             case 1:
                 return 2
@@ -110,6 +119,9 @@ class Game:
                 raise ValueError("Not a playernum")
 
     def make_guess(self, guess: tuple[int, int]) -> GuessReturn:
+        """
+        Places the guess on the current board
+        """
         game_state = self.current_board.make_guess(guess)
         match game_state:
             case GuessReturn.out_of_bounds:
