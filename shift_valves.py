@@ -1,3 +1,7 @@
+""" 
+This file has been copied from the repository: 
+https://github.com/fetlab/air_table_control
+"""
 import time
 
 import serial
